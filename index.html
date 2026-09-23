@@ -1,24 +1,30 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="h-full">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kalkulator HPP F&B Pro - Master Bahan, Premix & Menu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Kalkulator HPP F&B Pro - Mobile & Desktop</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Font: Inter -->
+  <!-- Google Font: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
   <style>
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       background-color: #f8fafc;
+      -webkit-tap-highlight-color: transparent;
     }
-    /* Custom scrollbar */
+    /* Safe padding for modern iPhone home indicators */
+    .pb-safe {
+      padding-bottom: env(safe-area-inset-bottom, 16px);
+    }
+    /* Scrollbar styling */
     ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+      width: 5px;
+      height: 5px;
     }
     ::-webkit-scrollbar-track {
       background: #f1f5f9;
@@ -27,10 +33,13 @@
       background: #cbd5e1;
       border-radius: 9999px;
     }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
+    /* Prevent font zoom on mobile Safari */
+    @media screen and (max-width: 768px) {
+      input, select, textarea {
+        font-size: 16px !important;
+      }
     }
-    /* Print specific optimization */
+    /* Print optimizations */
     @media print {
       .no-print {
         display: none !important;
@@ -41,305 +50,361 @@
       body {
         background: white !important;
         color: black !important;
-        font-size: 11pt;
-      }
-      .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl {
-        box-shadow: none !important;
-        border: 1px solid #e2e8f0 !important;
       }
     }
   </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="text-slate-800 antialiased min-h-full flex flex-col bg-slate-50 selection:bg-emerald-500 selection:text-white">
 
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 no-print">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
-        <!-- Logo & Title -->
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <!-- Top App Header -->
+  <header class="bg-white border-b border-slate-200/80 sticky top-0 z-30 no-print shadow-sm">
+    <div class="max-w-6xl mx-auto px-3 sm:px-6">
+      <div class="flex items-center justify-between h-14 sm:h-16">
+        
+        <!-- Brand & Current Page Title -->
+        <div class="flex items-center space-x-2.5">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-600/20 shrink-0">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
             </svg>
           </div>
           <div>
-            <h1 class="text-lg font-bold tracking-tight text-slate-900 leading-none">HPP Maker <span class="text-emerald-600 font-extrabold text-xs px-2 py-0.5 bg-emerald-50 rounded-full border border-emerald-200">F&B PRO</span></h1>
-            <p class="text-xs text-slate-500 mt-0.5">Kalkulator HPP Bertingkat: Bahan &rarr; Premix &rarr; Menu Jadi</p>
+            <div class="flex items-center space-x-1.5">
+              <h1 class="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight leading-none">HPP Pro</h1>
+              <span id="activePageBadge" class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200/70">Master Bahan</span>
+            </div>
+            <p class="text-[11px] text-slate-400 font-medium hidden sm:block">Kalkulator HPP Bertingkat F&B</p>
           </div>
         </div>
 
-        <!-- Quick actions: Backup, Restore & Reset -->
-        <div class="flex items-center space-x-2">
-          <button onclick="openCloudModal()" id="cloudStatusBtn" title="Google Sheets Cloud Sync" class="inline-flex items-center px-2.5 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg transition shadow-sm">
-            <span id="cloudStatusDot" class="w-2 h-2 rounded-full bg-slate-400 mr-1.5"></span>
-            <svg class="w-4 h-4 mr-1 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-            <span class="hidden sm:inline" id="cloudBtnText">Cloud Sync</span>
+        <!-- Quick actions: Cloud Status & Mobile Dropdown Menu -->
+        <div class="flex items-center space-x-1.5 sm:space-x-2">
+          <!-- Cloud Sync Button -->
+          <button onclick="openCloudModal()" id="cloudStatusBtn" title="Google Sheets Sync" class="inline-flex items-center px-2.5 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition active:scale-95">
+            <span id="cloudStatusDot" class="w-2 h-2 rounded-full bg-slate-400 mr-1.5 shrink-0"></span>
+            <span class="text-[11px] sm:text-xs" id="cloudBtnText">Cloud</span>
           </button>
-          <button onclick="exportDataJSON()" title="Simpan Cadangan Data" class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
-            <svg class="w-4 h-4 mr-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-            <span class="hidden sm:inline">Backup</span>
-          </button>
-          <label title="Muat Cadangan JSON" class="cursor-pointer inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
-            <svg class="w-4 h-4 mr-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"></path></svg>
-            <span class="hidden sm:inline">Restore</span>
-            <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importDataJSON(event)">
-          </label>
-          <button onclick="confirmResetData()" title="Muat Data Sampel Default" class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition">
-            <svg class="w-4 h-4 mr-1 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-            <span class="hidden sm:inline">Reset Sampel</span>
-          </button>
+
+          <!-- Desktop Quick Buttons -->
+          <div class="hidden md:flex items-center space-x-1.5">
+            <button onclick="exportDataJSON()" title="Simpan Cadangan" class="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
+              Backup
+            </button>
+            <label class="cursor-pointer px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
+              Restore
+              <input type="file" accept=".json" class="hidden" onchange="importDataJSON(event)">
+            </label>
+            <button onclick="confirmResetData()" title="Reset Default" class="px-2.5 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition">
+              Reset
+            </button>
+          </div>
+
+          <!-- Mobile Dropdown Trigger -->
+          <div class="relative md:hidden">
+            <button onclick="toggleMobileMenu()" class="p-2 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition active:scale-95" aria-label="Menu Opsi">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
+            </button>
+            <div id="mobileMenuDropdown" class="hidden absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 text-xs">
+              <button onclick="exportDataJSON(); toggleMobileMenu();" class="w-full text-left px-3.5 py-2 text-slate-700 hover:bg-slate-50 flex items-center">
+                <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Backup Data JSON
+              </button>
+              <label class="w-full text-left px-3.5 py-2 text-slate-700 hover:bg-slate-50 flex items-center cursor-pointer">
+                <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"></path></svg>
+                Restore JSON
+                <input type="file" accept=".json" class="hidden" onchange="importDataJSON(event); toggleMobileMenu();">
+              </label>
+              <div class="h-px bg-slate-100 my-1"></div>
+              <button onclick="confirmResetData(); toggleMobileMenu();" class="w-full text-left px-3.5 py-2 text-amber-700 hover:bg-amber-50 flex items-center">
+                <svg class="w-4 h-4 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Reset Data Default
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Desktop Top Tab Bar (Hidden on Mobile) -->
+    <div class="hidden sm:block border-t border-slate-100 bg-slate-50/50">
+      <div class="max-w-6xl mx-auto px-4 flex space-x-2 py-2">
+        <button id="deskTabBtn1" onclick="switchTab(1)" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center transition-all bg-emerald-600 text-white shadow-sm">
+          1. Master Bahan Baku
+          <span id="deskBadgeRaw" class="ml-2 px-1.5 py-0.2 rounded-full bg-emerald-700 text-white text-[10px]">0</span>
+        </button>
+        <button id="deskTabBtn2" onclick="switchTab(2)" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center transition-all text-slate-600 hover:bg-slate-100">
+          2. Sub-Resep (Premix)
+          <span id="deskBadgePremix" class="ml-2 px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700 text-[10px]">0</span>
+        </button>
+        <button id="deskTabBtn3" onclick="switchTab(3)" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center transition-all text-slate-600 hover:bg-slate-100">
+          3. Resep Menu Jadi
+          <span id="deskBadgeRecipe" class="ml-2 px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700 text-[10px]">0</span>
+        </button>
       </div>
     </div>
   </header>
 
-  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <!-- Tab Controls Navigation Bar -->
-    <div class="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-1.5 no-print mb-6">
-      <button id="tabBtn1" onclick="switchTab(1)" class="flex-1 py-3 px-4 rounded-xl text-sm font-semibold flex items-center justify-center transition-all bg-emerald-600 text-white shadow-sm">
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-        1. Master Bahan Baku
-        <span id="badgeRawCount" class="ml-2 px-2 py-0.5 text-xs rounded-full bg-emerald-700 text-emerald-100">0</span>
-      </button>
+  <!-- MAIN CONTENT CONTAINER (Extra bottom padding on mobile for Bottom Nav) -->
+  <main class="flex-grow max-w-6xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-28 sm:pb-12">
 
-      <button id="tabBtn2" onclick="switchTab(2)" class="flex-1 py-3 px-4 rounded-xl text-sm font-semibold flex items-center justify-center transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100">
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-        2. Sub-Resep / Premix
-        <span id="badgePremixCount" class="ml-2 px-2 py-0.5 text-xs rounded-full bg-slate-200 text-slate-700">0</span>
-      </button>
-
-      <button id="tabBtn3" onclick="switchTab(3)" class="flex-1 py-3 px-4 rounded-xl text-sm font-semibold flex items-center justify-center transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100">
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        3. Resep Menu Jadi (Final)
-        <span id="badgeRecipeCount" class="ml-2 px-2 py-0.5 text-xs rounded-full bg-slate-200 text-slate-700">0</span>
-      </button>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- TAB 1: MASTER BAHAN BAKU                   -->
-    <!-- ========================================== -->
-    <div id="tabContent1" class="space-y-6">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <!-- ======================================================== -->
+    <!-- HALAMAN 1: MASTER BAHAN BAKU                             -->
+    <!-- ======================================================== -->
+    <div id="pageContent1" class="space-y-4">
+      <!-- Page Header & Action -->
+      <div class="flex items-center justify-between gap-2">
         <div>
-          <h2 class="text-xl font-bold text-slate-900">Master Bahan Baku (Raw Materials)</h2>
-          <p class="text-sm text-slate-500">Daftar bahan yang dibeli langsung dari supplier beserta harga modal per unit terkecil.</p>
+          <h2 class="text-lg sm:text-xl font-bold text-slate-900 leading-tight">Master Bahan Baku</h2>
+          <p class="text-xs text-slate-500 hidden sm:block">Input harga beli kemasan asli & modal per satuan terkecil.</p>
         </div>
-        <button onclick="openRawModal()" class="inline-flex items-center justify-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-emerald-600/30 transition">
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-          Tambah Bahan Baku
+        <button onclick="openRawModal()" class="inline-flex items-center px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm shadow-emerald-600/30 transition active:scale-95 shrink-0">
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+          Tambah Bahan
         </button>
       </div>
 
-      <!-- Filter & Search Controls -->
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+      <!-- Search & Filter Controls -->
+      <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200/90 shadow-sm flex flex-col sm:flex-row gap-2">
         <div class="relative flex-1">
           <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
           </span>
-          <input type="text" id="rawSearch" oninput="renderRawMaterials()" placeholder="Cari nama bahan baku..." class="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          <input type="text" id="rawSearch" oninput="renderRawMaterials()" placeholder="Cari nama bahan baku..." class="w-full pl-9 pr-3 py-2 text-xs sm:text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
         </div>
-        <div class="flex items-center space-x-2">
-          <select id="rawCategoryFilter" onchange="renderRawMaterials()" class="text-sm border border-slate-200 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
-            <option value="ALL">Semua Kategori</option>
-            <option value="Liquid">Liquid (Cair)</option>
-            <option value="Powder/Beans">Powder / Biji</option>
-            <option value="Packaging">Kemasan / Cup</option>
-            <option value="Topping/Other">Topping / Lainnya</option>
-          </select>
-        </div>
+        <select id="rawCategoryFilter" onchange="renderRawMaterials()" class="text-xs sm:text-sm border border-slate-200 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-slate-700">
+          <option value="ALL">Semua Kategori</option>
+          <option value="Liquid">Liquid (Cair)</option>
+          <option value="Powder/Beans">Powder / Biji</option>
+          <option value="Packaging">Kemasan / Cup</option>
+          <option value="Topping/Other">Topping / Lainnya</option>
+        </select>
       </div>
 
-      <!-- Raw Materials Table -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                <th class="py-3.5 px-4">Nama Bahan</th>
-                <th class="py-3.5 px-4">Kategori</th>
-                <th class="py-3.5 px-4 text-right">Harga Beli Kemasan</th>
-                <th class="py-3.5 px-4 text-right">Ukuran Kemasan</th>
-                <th class="py-3.5 px-4 text-right bg-emerald-50/50 text-emerald-900 font-bold">Harga per Satuan</th>
-                <th class="py-3.5 px-4 text-center no-print">Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="rawMaterialsTableBody" class="divide-y divide-slate-100">
-              <!-- Rendered via JS -->
-            </tbody>
-          </table>
-        </div>
-        <div id="rawEmptyState" class="hidden p-8 text-center text-slate-400">
-          <svg class="w-12 h-12 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-          <p class="font-medium">Belum ada data bahan baku.</p>
-          <p class="text-xs text-slate-400 mt-1">Klik tombol "+ Tambah Bahan Baku" untuk memulai.</p>
-        </div>
+      <!-- Mobile Optimized Card View (< 768px) -->
+      <div id="rawMobileCardContainer" class="space-y-2.5 md:hidden">
+        <!-- Rendered via JS for phones -->
+      </div>
+
+      <!-- Desktop Table View (>= 768px) -->
+      <div class="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+              <th class="py-3 px-4">Nama Bahan</th>
+              <th class="py-3 px-4">Kategori</th>
+              <th class="py-3 px-4 text-right">Harga Kemasan</th>
+              <th class="py-3 px-4 text-right">Ukuran</th>
+              <th class="py-3 px-4 text-right bg-emerald-50/60 text-emerald-900 font-bold">HPP per Satuan</th>
+              <th class="py-3 px-4 text-center no-print">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="rawMaterialsTableBody" class="divide-y divide-slate-100">
+            <!-- Rendered via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State -->
+      <div id="rawEmptyState" class="hidden bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-400">
+        <svg class="w-12 h-12 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+        <p class="font-medium text-slate-600 text-sm">Belum ada data bahan baku</p>
+        <p class="text-xs text-slate-400 mt-0.5">Tekan tombol "+ Tambah Bahan" di atas.</p>
       </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- TAB 2: MASTER SUB-RESEP / PREMIX           -->
-    <!-- ========================================== -->
-    <div id="tabContent2" class="space-y-6 hidden">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <!-- ======================================================== -->
+    <!-- HALAMAN 2: SUB-RESEP / PREMIX (CAMPURAN)                 -->
+    <!-- ======================================================== -->
+    <div id="pageContent2" class="space-y-4 hidden">
+      <div class="flex items-center justify-between gap-2">
         <div>
-          <h2 class="text-xl font-bold text-slate-900">Master Sub-Resep / Premix (Olahan Campuran)</h2>
-          <p class="text-sm text-slate-500">Buat formula racikan batch (contoh: Susu Blend Base, Sirup Racikan, Bubuk Mix). HPP per gram/ml terhitung otomatis!</p>
+          <h2 class="text-lg sm:text-xl font-bold text-slate-900 leading-tight">Sub-Resep / Premix</h2>
+          <p class="text-xs text-slate-500 hidden sm:block">Racikan adonan batch (Susu Blend, Sirup Mix). HPP/gram terhitung otomatis.</p>
         </div>
-        <button onclick="openPremixModal()" class="inline-flex items-center justify-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-emerald-600/30 transition">
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-          Buat Sub-Resep Baru
+        <button onclick="openPremixModal()" class="inline-flex items-center px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm shadow-emerald-600/30 transition active:scale-95 shrink-0">
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+          Buat Sub-Resep
         </button>
       </div>
 
-      <!-- Premixes Grid Display -->
-      <div id="premixListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Premixes Grid Container -->
+      <div id="premixListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
         <!-- Rendered via JS -->
       </div>
 
-      <div id="premixEmptyState" class="hidden bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-400">
-        <div class="w-16 h-16 mx-auto mb-3 bg-teal-50 rounded-2xl flex items-center justify-center text-teal-600">
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+      <div id="premixEmptyState" class="hidden bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
+        <div class="w-12 h-12 mx-auto mb-2 bg-teal-50 rounded-xl flex items-center justify-center text-teal-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
         </div>
-        <h3 class="text-base font-semibold text-slate-800">Belum ada racikan sub-resep</h3>
-        <p class="text-sm text-slate-500 max-w-md mx-auto mt-1">Gunakan fitur ini untuk mencampur beberapa bahan baku dari Tab 1 menjadi 1 formula dasar yang siap dipakai pada resep menu.</p>
-        <button onclick="openPremixModal()" class="mt-4 inline-flex items-center px-4 py-2 text-sm font-semibold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition">
-          + Buat Premix Pertama
+        <p class="font-medium text-slate-700 text-sm">Belum ada racikan sub-resep</p>
+        <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Gunakan fitur ini untuk membuat formula campuran dari bahan baku Tab 1.</p>
+        <button onclick="openPremixModal()" class="mt-3 inline-flex items-center px-4 py-2 text-xs font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition">
+          + Buat Premix Baru
         </button>
       </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- TAB 3: RESEP MENU JADI (FINAL PRODUCT)     -->
-    <!-- ========================================== -->
-    <div id="tabContent3" class="space-y-6 hidden">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <!-- ======================================================== -->
+    <!-- HALAMAN 3: RESEP MENU JADI (FINAL PRODUCT)               -->
+    <!-- ======================================================== -->
+    <div id="pageContent3" class="space-y-4 hidden">
+      <div class="flex items-center justify-between gap-2">
         <div>
-          <h2 class="text-xl font-bold text-slate-900">Resep Menu Jadi (Final Product)</h2>
-          <p class="text-sm text-slate-500">Hitung HPP per porsi/cup, gabungkan bahan mentah, sub-resep, packaging, serta margin profit.</p>
+          <h2 class="text-lg sm:text-xl font-bold text-slate-900 leading-tight">Resep Menu Jadi</h2>
+          <p class="text-xs text-slate-500 hidden sm:block">Kombinasi bahan mentah + sub-resep + packaging untuk 1 porsi menu jual.</p>
         </div>
-        <button onclick="openRecipeModal()" class="inline-flex items-center justify-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-emerald-600/30 transition">
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-          Tambah Resep Menu
+        <button onclick="openRecipeModal()" class="inline-flex items-center px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm shadow-emerald-600/30 transition active:scale-95 shrink-0">
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+          Tambah Menu
         </button>
       </div>
 
       <!-- Recipes List Display -->
-      <div id="recipesListContainer" class="space-y-4">
+      <div id="recipesListContainer" class="space-y-3.5">
         <!-- Rendered via JS -->
       </div>
 
-      <div id="recipeEmptyState" class="hidden bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-400">
-        <div class="w-16 h-16 mx-auto mb-3 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+      <div id="recipeEmptyState" class="hidden bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
+        <div class="w-12 h-12 mx-auto mb-2 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
         </div>
-        <h3 class="text-base font-semibold text-slate-800">Belum ada resep menu jadi</h3>
-        <p class="text-sm text-slate-500 max-w-md mx-auto mt-1">Gabungkan bahan mentah dan racikan premix yang sudah dibuat untuk mengetahui HPP per porsi dan kalkulasi margin profit.</p>
-        <button onclick="openRecipeModal()" class="mt-4 inline-flex items-center px-4 py-2 text-sm font-semibold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition">
+        <p class="font-medium text-slate-700 text-sm">Belum ada resep menu jadi</p>
+        <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Gabungkan bahan mentah dan premix untuk menghitung HPP per cup dan margin profit.</p>
+        <button onclick="openRecipeModal()" class="mt-3 inline-flex items-center px-4 py-2 text-xs font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition">
           + Racik Menu Sekarang
         </button>
       </div>
     </div>
   </main>
 
-  <!-- ========================================== -->
-  <!-- MODAL: ADD / EDIT RAW MATERIAL             -->
-  <!-- ========================================== -->
-  <div id="rawModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative my-8">
+  <!-- MOBILE BOTTOM NAVIGATION BAR (Visible strictly on small screens) -->
+  <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 pb-safe no-print shadow-lg">
+    <div class="grid grid-cols-3 h-16">
+      
+      <!-- Nav 1: Master Bahan -->
+      <button onclick="switchTab(1)" id="mobileNavBtn1" class="flex flex-col items-center justify-center text-emerald-600 relative transition-all">
+        <div class="relative">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+          <span id="mobileBadgeRaw" class="absolute -top-1.5 -right-3 px-1.5 py-0.2 text-[9px] font-bold rounded-full bg-emerald-600 text-white">0</span>
+        </div>
+        <span class="text-[11px] font-bold mt-1">1. Master</span>
+      </button>
+
+      <!-- Nav 2: Sub-Resep -->
+      <button onclick="switchTab(2)" id="mobileNavBtn2" class="flex flex-col items-center justify-center text-slate-400 relative transition-all">
+        <div class="relative">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+          <span id="mobileBadgePremix" class="absolute -top-1.5 -right-3 px-1.5 py-0.2 text-[9px] font-bold rounded-full bg-slate-300 text-slate-700">0</span>
+        </div>
+        <span class="text-[11px] font-medium mt-1">2. Sub-Resep</span>
+      </button>
+
+      <!-- Nav 3: Menu Jadi -->
+      <button onclick="switchTab(3)" id="mobileNavBtn3" class="flex flex-col items-center justify-center text-slate-400 relative transition-all">
+        <div class="relative">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span id="mobileBadgeRecipe" class="absolute -top-1.5 -right-3 px-1.5 py-0.2 text-[9px] font-bold rounded-full bg-slate-300 text-slate-700">0</span>
+        </div>
+        <span class="text-[11px] font-medium mt-1">3. Menu</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MODAL: ADD / EDIT RAW MATERIAL (Responsive Bottom-Sheet on Mobile) -->
+  <div id="rawModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-        <h3 id="rawModalTitle" class="text-lg font-bold text-slate-900">Tambah Bahan Baku</h3>
-        <button onclick="closeRawModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+        <h3 id="rawModalTitle" class="text-base sm:text-lg font-bold text-slate-900">Tambah Bahan Baku</h3>
+        <button onclick="closeRawModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
 
-      <form id="rawForm" onsubmit="saveRawMaterial(event)" class="mt-4 space-y-4">
+      <form id="rawForm" onsubmit="saveRawMaterial(event)" class="mt-4 space-y-3.5 flex-1 overflow-y-auto pr-1">
         <input type="hidden" id="rawId">
         
         <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nama Bahan Baku</label>
-          <input type="text" id="rawName" required placeholder="Contoh: Susu UHT Diamond, Kopi Arabika" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Bahan Baku</label>
+          <input type="text" id="rawName" required placeholder="Contoh: Susu UHT Diamond, Kopi Arabika" class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Kategori</label>
-            <select id="rawCategory" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Kategori</label>
+            <select id="rawCategory" class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
               <option value="Liquid">Liquid (Cair)</option>
               <option value="Powder/Beans">Powder / Biji</option>
               <option value="Packaging">Kemasan</option>
-              <option value="Topping/Other">Topping / Lainnya</option>
+              <option value="Topping/Other">Topping / Lain</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Satuan Dasar</label>
-            <select id="rawUnit" onchange="calculateRawUnitPreview()" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Satuan Dasar</label>
+            <select id="rawUnit" onchange="calculateRawUnitPreview()" class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
               <option value="ml">ml (Mililiter)</option>
               <option value="gram">gram (Gram)</option>
-              <option value="pcs">pcs (Buah/Lembar)</option>
+              <option value="pcs">pcs (Satuan/Cup)</option>
             </select>
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Harga Beli Kemasan Asli (Rp)</label>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Harga Beli Kemasan Asli (Rp)</label>
           <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-semibold text-slate-400">Rp</span>
-            <input type="number" id="rawPackPrice" required min="1" step="any" oninput="calculateRawUnitPreview()" placeholder="Contoh: 18500" class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs font-bold text-slate-400">Rp</span>
+            <input type="number" id="rawPackPrice" required min="1" step="any" oninput="calculateRawUnitPreview()" placeholder="Contoh: 19500" class="w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono">
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Isi / Ukuran Kemasan Asli</label>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Isi / Ukuran Kemasan Asli</label>
           <div class="flex">
-            <input type="number" id="rawPackSize" required min="0.01" step="any" oninput="calculateRawUnitPreview()" placeholder="Contoh: 1000" class="w-full px-3 py-2 border border-slate-200 rounded-l-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-            <span id="rawUnitLabel" class="inline-flex items-center px-3 bg-slate-100 border border-l-0 border-slate-200 text-slate-500 text-xs rounded-r-lg font-medium">ml</span>
+            <input type="number" id="rawPackSize" required min="0.01" step="any" oninput="calculateRawUnitPreview()" placeholder="Contoh: 1000" class="w-full px-3 py-2.5 border border-slate-200 rounded-l-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono">
+            <span id="rawUnitLabel" class="inline-flex items-center px-3.5 bg-slate-100 border border-l-0 border-slate-200 text-slate-600 text-xs rounded-r-xl font-bold">ml</span>
           </div>
         </div>
 
         <!-- Real-time Cost Calculation Box -->
-        <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-950 flex items-center justify-between">
+        <div class="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200 text-emerald-950 flex items-center justify-between">
           <div>
-            <span class="text-xs text-emerald-700 block font-medium">Modal Satuan Terkecil:</span>
-            <span id="rawCostPerUnitPreview" class="text-base font-bold text-emerald-800">Rp 0.00 / ml</span>
+            <span class="text-[11px] text-emerald-700 block font-medium">Modal Satuan Terkecil:</span>
+            <span id="rawCostPerUnitPreview" class="text-sm sm:text-base font-extrabold text-emerald-800">Rp 0.00 / ml</span>
           </div>
-          <span class="text-[11px] text-emerald-600 bg-emerald-100/70 px-2 py-1 rounded">Otomatis</span>
+          <span class="text-[10px] text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded font-bold">Otomatis</span>
         </div>
 
         <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
-          <button type="button" onclick="closeRawModal()" class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 font-medium rounded-lg">Batal</button>
-          <button type="submit" class="px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition">Simpan Bahan</button>
+          <button type="button" onclick="closeRawModal()" class="px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-800 rounded-xl">Batal</button>
+          <button type="submit" class="px-5 py-2.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm transition active:scale-95">Simpan Bahan</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL: PREMIX / SUB-RESEP BUILDER          -->
-  <!-- ========================================== -->
-  <div id="premixModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative my-8 max-h-[90vh] flex flex-col">
+  <!-- MODAL: PREMIX / SUB-RESEP BUILDER -->
+  <div id="premixModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
         <div>
-          <h3 id="premixModalTitle" class="text-lg font-bold text-slate-900">Buat Sub-Resep / Premix</h3>
-          <p class="text-xs text-slate-500">Campurkan beberapa bahan baku menjadi 1 batch adonan/base racikan</p>
+          <h3 id="premixModalTitle" class="text-base sm:text-lg font-bold text-slate-900">Buat Sub-Resep / Premix</h3>
+          <p class="text-[11px] text-slate-500">Campur bahan baku menjadi 1 formula racikan batch</p>
         </div>
-        <button onclick="closePremixModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+        <button onclick="closePremixModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
 
-      <form id="premixForm" onsubmit="savePremix(event)" class="mt-4 space-y-4 flex-1 overflow-y-auto pr-1">
+      <form id="premixForm" onsubmit="savePremix(event)" class="mt-3.5 space-y-3.5 flex-1 overflow-y-auto pr-1">
         <input type="hidden" id="premixId">
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <div class="sm:col-span-2">
-            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nama Racikan / Campuran</label>
-            <input type="text" id="premixName" required placeholder="Contoh: Susu Blend Base, Earl Grey Base" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Racikan / Premix</label>
+            <input type="text" id="premixName" required placeholder="Contoh: Susu Blend Base Creamy" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Satuan Hasil Batch</label>
-            <select id="premixYieldUnit" onchange="updatePremixCostSummary()" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Satuan Hasil</label>
+            <select id="premixYieldUnit" onchange="updatePremixCostSummary()" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
               <option value="gram">gram (Berat)</option>
               <option value="ml">ml (Volume)</option>
             </select>
@@ -348,26 +413,26 @@
 
         <!-- Ingredients Table in Premix -->
         <div>
-          <div class="flex items-center justify-between mb-2">
-            <label class="text-xs font-semibold text-slate-700 uppercase">Komposisi Bahan Racikan (Tab 1)</label>
-            <button type="button" onclick="addPremixRow()" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center">
-              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-              + Tambah Komponen
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-bold text-slate-700 uppercase">Bahan Racikan (Tab 1)</label>
+            <button type="button" onclick="addPremixRow()" class="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center">
+              <svg class="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+              + Bahan
             </button>
           </div>
 
-          <div class="border border-slate-200 rounded-xl overflow-hidden">
-            <div class="max-h-60 overflow-y-auto">
+          <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50">
+            <div class="max-h-56 overflow-y-auto">
               <table class="w-full text-left text-xs border-collapse">
-                <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold sticky top-0">
+                <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 font-bold sticky top-0">
                   <tr>
-                    <th class="p-2.5">Pilih Bahan Baku</th>
-                    <th class="p-2.5 w-28">Takaran</th>
-                    <th class="p-2.5 text-right w-28">Biaya</th>
-                    <th class="p-2.5 text-center w-12">Hapus</th>
+                    <th class="p-2">Pilih Bahan</th>
+                    <th class="p-2 w-28">Takaran</th>
+                    <th class="p-2 text-right w-24">Biaya</th>
+                    <th class="p-2 text-center w-10"></th>
                   </tr>
                 </thead>
-                <tbody id="premixRowsBody" class="divide-y divide-slate-100">
+                <tbody id="premixRowsBody" class="divide-y divide-slate-100 bg-white">
                   <!-- Dynamic rows via JS -->
                 </tbody>
               </table>
@@ -375,81 +440,79 @@
           </div>
         </div>
 
-        <!-- Real-time Premix Calculation Summary -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
-          <div class="p-2 bg-white rounded-lg border border-slate-100">
-            <span class="text-[11px] text-slate-500 block">Total Bobot Batch:</span>
-            <span id="premixTotalYieldDisplay" class="text-sm font-bold text-slate-900">0 gram</span>
+        <!-- Premix Calculation Summary -->
+        <div class="grid grid-cols-3 gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-center">
+          <div class="p-1.5 bg-white rounded-lg border border-slate-100">
+            <span class="text-[10px] text-slate-400 block font-semibold">Total Batch</span>
+            <span id="premixTotalYieldDisplay" class="text-xs sm:text-sm font-bold text-slate-900">0 gr</span>
           </div>
-          <div class="p-2 bg-white rounded-lg border border-slate-100">
-            <span class="text-[11px] text-slate-500 block">Total Modal 1 Batch:</span>
-            <span id="premixTotalCostDisplay" class="text-sm font-bold text-slate-900">Rp 0</span>
+          <div class="p-1.5 bg-white rounded-lg border border-slate-100">
+            <span class="text-[10px] text-slate-400 block font-semibold">Modal 1 Batch</span>
+            <span id="premixTotalCostDisplay" class="text-xs sm:text-sm font-bold text-slate-900">Rp 0</span>
           </div>
-          <div class="p-2 bg-emerald-50 rounded-lg border border-emerald-200">
-            <span class="text-[11px] text-emerald-700 block font-medium">HPP per Gram/Ml:</span>
-            <span id="premixUnitCostDisplay" class="text-sm font-extrabold text-emerald-800">Rp 0.00 / gr</span>
+          <div class="p-1.5 bg-emerald-50 rounded-lg border border-emerald-200">
+            <span class="text-[10px] text-emerald-700 block font-bold">HPP / Unit</span>
+            <span id="premixUnitCostDisplay" class="text-xs sm:text-sm font-extrabold text-emerald-800">Rp 0/gr</span>
           </div>
         </div>
 
         <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
-          <button type="button" onclick="closePremixModal()" class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 font-medium rounded-lg">Batal</button>
-          <button type="submit" class="px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition">Simpan Sub-Resep</button>
+          <button type="button" onclick="closePremixModal()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 rounded-xl">Batal</button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm transition active:scale-95">Simpan Sub-Resep</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL: FINAL MENU RECIPE BUILDER           -->
-  <!-- ========================================== -->
-  <div id="recipeModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl relative my-8 max-h-[92vh] flex flex-col">
+  <!-- MODAL: FINAL MENU RECIPE BUILDER -->
+  <div id="recipeModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl relative max-h-[94vh] flex flex-col">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
         <div>
-          <h3 id="recipeModalTitle" class="text-lg font-bold text-slate-900">Racik Resep Menu Jadi</h3>
-          <p class="text-xs text-slate-500">Kombinasikan Bahan Mentah & Sub-Resep Racikan untuk 1 porsi menu</p>
+          <h3 id="recipeModalTitle" class="text-base sm:text-lg font-bold text-slate-900">Racik Resep Menu Jadi</h3>
+          <p class="text-[11px] text-slate-500">Gabungkan bahan mentah & sub-resep untuk 1 porsi menu</p>
         </div>
-        <button onclick="closeRecipeModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+        <button onclick="closeRecipeModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
 
-      <form id="recipeForm" onsubmit="saveRecipe(event)" class="mt-4 space-y-4 flex-1 overflow-y-auto pr-1">
+      <form id="recipeForm" onsubmit="saveRecipe(event)" class="mt-3.5 space-y-3.5 flex-1 overflow-y-auto pr-1">
         <input type="hidden" id="recipeId">
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <div class="sm:col-span-2">
-            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nama Menu Minuman / Makanan</label>
-            <input type="text" id="recipeName" required placeholder="Contoh: Es Kopi Susu Creamy Aren" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Menu Minuman / Makanan</label>
+            <input type="text" id="recipeName" required placeholder="Contoh: Es Kopi Susu Creamy Aren" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Kategori Menu</label>
-            <input type="text" id="recipeCategory" placeholder="Kopi, Non-Coffee, Food" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Kategori Menu</label>
+            <input type="text" id="recipeCategory" placeholder="Kopi, Non-Coffee, Food" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
           </div>
         </div>
 
         <!-- Recipe Ingredients Dynamic List -->
         <div>
-          <div class="flex items-center justify-between mb-2">
-            <label class="text-xs font-semibold text-slate-700 uppercase">Komposisi 1 Porsi (Bahan Mentah ATAU Sub-Resep)</label>
-            <button type="button" onclick="addRecipeItemRow()" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center">
-              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-              + Tambah Komponen
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-bold text-slate-700 uppercase">Komposisi Porsi (Mentah / Premix)</label>
+            <button type="button" onclick="addRecipeItemRow()" class="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center">
+              <svg class="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+              + Komponen
             </button>
           </div>
 
-          <div class="border border-slate-200 rounded-xl overflow-hidden">
-            <div class="max-h-60 overflow-y-auto">
+          <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50">
+            <div class="max-h-52 overflow-y-auto">
               <table class="w-full text-left text-xs border-collapse">
-                <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold sticky top-0">
+                <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 font-bold sticky top-0">
                   <tr>
-                    <th class="p-2.5">Pilih Sumber Bahan</th>
-                    <th class="p-2.5 w-32">Takaran</th>
-                    <th class="p-2.5 text-right w-28">Biaya</th>
-                    <th class="p-2.5 text-center w-12">Hapus</th>
+                    <th class="p-2">Sumber Bahan</th>
+                    <th class="p-2 w-28">Takaran</th>
+                    <th class="p-2 text-right w-24">Biaya</th>
+                    <th class="p-2 text-center w-10"></th>
                   </tr>
                 </thead>
-                <tbody id="recipeRowsBody" class="divide-y divide-slate-100">
+                <tbody id="recipeRowsBody" class="divide-y divide-slate-100 bg-white">
                   <!-- Dynamic rows via JS -->
                 </tbody>
               </table>
@@ -457,42 +520,38 @@
           </div>
         </div>
 
-        <!-- Additional Operational / Packaging Overhead -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+        <!-- Operational Overhead & Target Margin -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200">
           <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Biaya Tambahan / Overhead Opsional (Rp)</label>
-            <input type="number" id="recipeAdditionalCost" min="0" step="any" oninput="calculateRecipeFinancials()" placeholder="Es batu, stiker, tissue (contoh: 300)" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Overhead / Es / Cup (Rp)</label>
+            <input type="number" id="recipeAdditionalCost" min="0" step="any" oninput="calculateRecipeFinancials()" placeholder="Contoh: 350" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Target Margin Profit (%)</label>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Target Margin Profit (%)</label>
             <div class="relative">
-              <input type="number" id="recipeMarginTarget" min="1" max="95" step="any" oninput="calculateFromMarginTarget()" placeholder="Contoh: 60" class="w-full pr-8 pl-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              <input type="number" id="recipeMarginTarget" min="1" max="95" step="any" oninput="calculateFromMarginTarget()" placeholder="Contoh: 60" class="w-full pr-8 pl-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono">
               <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-xs font-bold text-slate-400">%</span>
             </div>
           </div>
         </div>
 
-        <!-- Live Price & Margin Calculator Summary -->
-        <div class="bg-gradient-to-br from-emerald-50 to-teal-50/60 p-4 rounded-xl border border-emerald-200 space-y-3">
+        <!-- Live Price & Profit Summary -->
+        <div class="bg-gradient-to-br from-emerald-50 to-teal-50/60 p-3.5 rounded-xl border border-emerald-200 space-y-2.5">
           <div class="flex items-center justify-between text-xs text-slate-600">
-            <span>Total HPP Bersih (Bahan + Overhead):</span>
-            <span id="recipeHppTotalDisplay" class="font-bold text-slate-900 text-sm">Rp 0</span>
+            <span>Total HPP Bersih 1 Porsi:</span>
+            <span id="recipeHppTotalDisplay" class="font-extrabold text-slate-900 text-sm font-mono">Rp 0</span>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-emerald-200/60">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-emerald-200/60">
             <div>
-              <label class="block text-xs font-bold text-emerald-950 uppercase mb-1">Saran Harga Jual (Sesuai Target Margin)</label>
-              <div class="text-base font-extrabold text-emerald-800" id="recipeSuggestedPriceDisplay">Rp 0</div>
-              <span class="text-[10px] text-slate-500">Formula: HPP / (1 - Margin%)</span>
+              <span class="block text-[10px] font-bold text-emerald-900 uppercase">Saran Harga Jual:</span>
+              <div class="text-sm sm:text-base font-extrabold text-emerald-800 font-mono" id="recipeSuggestedPriceDisplay">Rp 0</div>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-800 uppercase mb-1">Atur Harga Jual Riil (Rp)</label>
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-semibold text-slate-400">Rp</span>
-                <input type="number" id="recipeActualSellingPrice" min="0" step="any" oninput="calculateFromActualPrice()" placeholder="20000" class="w-full pl-9 pr-3 py-1.5 border border-slate-300 rounded-lg text-sm font-semibold bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-              </div>
-              <div class="text-[11px] text-slate-600 mt-1 flex justify-between">
-                <span>Profit Kotor: <strong id="recipeActualProfitRpDisplay">Rp 0</strong></span>
+              <label class="block text-[10px] font-bold text-slate-800 uppercase mb-1">Harga Jual Riil (Rp)</label>
+              <input type="number" id="recipeActualSellingPrice" min="0" step="any" oninput="calculateFromActualPrice()" placeholder="20000" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-bold bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono">
+              <div class="text-[11px] text-slate-600 mt-1 flex justify-between font-medium">
+                <span>Profit: <strong id="recipeActualProfitRpDisplay" class="text-emerald-700">Rp 0</strong></span>
                 <span>Margin: <strong id="recipeActualProfitPctDisplay">0%</strong></span>
               </div>
             </div>
@@ -500,32 +559,30 @@
         </div>
 
         <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
-          <button type="button" onclick="closeRecipeModal()" class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 font-medium rounded-lg">Batal</button>
-          <button type="submit" class="px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition">Simpan Resep Menu</button>
+          <button type="button" onclick="closeRecipeModal()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 rounded-xl">Batal</button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm transition active:scale-95">Simpan Resep Menu</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL: RECIPE DETAIL & PRINT SUMMARY       -->
-  <!-- ========================================== -->
-  <div id="printModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl relative my-8">
+  <!-- MODAL: RECIPE DETAIL & PRINT SUMMARY -->
+  <div id="printModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl relative my-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200 no-print">
-        <h3 class="text-base font-bold text-slate-900">Ringkasan & Cetak HPP Menu</h3>
-        <button onclick="closePrintModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+        <h3 class="text-sm sm:text-base font-bold text-slate-900">Ringkasan HPP Menu</h3>
+        <button onclick="closePrintModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
 
-      <div id="printContainer" class="mt-4 space-y-4">
-        <!-- Rendered dynamically for single menu print -->
+      <div id="printContainer" class="mt-3.5 space-y-3">
+        <!-- Rendered dynamically -->
       </div>
 
-      <div class="flex items-center justify-end space-x-2 pt-4 border-t border-slate-200 no-print mt-6">
-        <button type="button" onclick="copyPrintAsText()" class="px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition">Salin Teks Ringkasan</button>
-        <button type="button" onclick="triggerBrowserPrint()" class="px-4 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition flex items-center">
+      <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200 no-print mt-4">
+        <button type="button" onclick="copyPrintAsText()" class="px-3 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition">Salin Teks</button>
+        <button type="button" onclick="triggerBrowserPrint()" class="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm transition flex items-center">
           <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
           Cetak / PDF
         </button>
@@ -533,165 +590,80 @@
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL: GOOGLE SHEETS CLOUD SYNC & GITHUB   -->
-  <!-- ========================================== -->
-  <div id="cloudModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative my-8 max-h-[92vh] flex flex-col">
+  <!-- MODAL: GOOGLE SHEETS CLOUD SYNC -->
+  <div id="cloudModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
         <div class="flex items-center space-x-2">
           <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
           </div>
-          <div>
-            <h3 class="text-base font-bold text-slate-900">Sinkronisasi Google Sheets & Multi-Device</h3>
-            <p class="text-xs text-slate-500">Database tersimpan di Google Sheet & diakses dari HP/Laptop via GitHub</p>
-          </div>
+          <h3 class="text-sm sm:text-base font-bold text-slate-900">Google Sheets Cloud Sync</h3>
         </div>
-        <button onclick="closeCloudModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+        <button onclick="closeCloudModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
 
-      <div class="mt-4 space-y-4 flex-1 overflow-y-auto pr-1">
-        <!-- Status Card -->
-        <div id="cloudInfoBox" class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+      <div class="mt-3.5 space-y-3 flex-1 overflow-y-auto pr-1 text-xs">
+        <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
           <div>
-            <div class="flex items-center space-x-2">
-              <span id="cloudStatusBadge" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-200 text-slate-700">Belum Terhubung</span>
-              <span id="cloudLastSyncText" class="text-xs text-slate-500">Terakhir: Tidak pernah</span>
-            </div>
-            <p class="text-xs text-slate-600 mt-1" id="cloudStatusNote">Masukkan Web App URL Google Apps Script Anda di bawah.</p>
+            <span id="cloudStatusBadge" class="px-2 py-0.5 font-bold rounded-full bg-slate-200 text-slate-700 text-[10px]">Tersambung</span>
+            <div id="cloudLastSyncText" class="text-[11px] text-slate-500 mt-1">Terakhir: Tidak pernah</div>
           </div>
-          <div class="flex items-center space-x-2">
-            <button onclick="pullFromGoogleSheet(true)" id="btnPull" class="px-3 py-1.5 text-xs font-semibold bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg shadow-sm transition">
-              Tarik (Pull)
-            </button>
-            <button onclick="pushToGoogleSheet(true)" id="btnPush" class="px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition">
-              Kirim (Push)
-            </button>
+          <div class="flex space-x-1.5">
+            <button onclick="pullFromGoogleSheet(true)" class="px-3 py-1.5 font-bold bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg shadow-sm">Tarik</button>
+            <button onclick="pushToGoogleSheet(true)" class="px-3 py-1.5 font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm">Kirim</button>
           </div>
         </div>
 
-        <!-- URL Configuration Form -->
-        <div class="space-y-3">
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Google Apps Script Web App URL</label>
-            <input type="url" id="cloudAppUrlInput" value="https://script.google.com/macros/s/AKfycbzrM3a9X_sXktdLIAGtX9kdr9b_BtFmn7UdrTUb-hZhiWbadMMJyJzasDHutHcifaIiPA/exec" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-          </div>
-
-          <div class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl">
-            <div>
-              <span class="text-xs font-bold text-slate-800 block">Auto-Sync Real-Time</span>
-              <span class="text-[11px] text-slate-500">Otomatis simpan ke Google Sheet setiap kali menambah/mengedit bahan & menu</span>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" id="cloudAutoSyncCheck" class="sr-only peer" onchange="toggleAutoSyncSetting(this.checked)">
-              <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
-            </label>
-          </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Web App URL Google Apps Script</label>
+          <input type="url" id="cloudAppUrlInput" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none">
         </div>
 
-        <!-- Collapsible Setup Guide -->
-        <div class="border border-slate-200 rounded-xl overflow-hidden">
-          <div class="p-3 bg-slate-100/70 border-b border-slate-200 flex items-center justify-between">
-            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wide">Panduan Setup Database Google Sheet & GitHub</h4>
-            <span class="text-[10px] text-emerald-700 bg-emerald-100 font-semibold px-2 py-0.5 rounded">Gratis 100%</span>
+        <div class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl">
+          <div>
+            <span class="font-bold text-slate-800 block text-xs">Auto-Sync Otomatis</span>
+            <span class="text-[10px] text-slate-400">Simpan ke Google Sheet tiap ada perubahan data</span>
           </div>
-          <div class="p-4 space-y-3 text-xs text-slate-600 bg-white">
-            <div class="flex space-x-2.5">
-              <span class="w-5 h-5 shrink-0 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-[10px]">1</span>
-              <div>
-                <p class="font-semibold text-slate-800">Buat Google Sheet & Buka Apps Script:</p>
-                <p class="mt-0.5">Buka <a href="https://sheets.new" target="_blank" class="text-emerald-600 underline font-medium">sheets.new</a> &rarr; Klik menu <strong>Ekstensi (Extensions)</strong> &rarr; <strong>Apps Script</strong>.</p>
-              </div>
-            </div>
-
-            <div class="flex space-x-2.5">
-              <span class="w-5 h-5 shrink-0 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-[10px]">2</span>
-              <div class="flex-1">
-                <p class="font-semibold text-slate-800">Salin Script Backend Google Sheet:</p>
-                <p class="mt-0.5">Hapus kode bawaan di editor Apps Script, lalu tempel kode berikut:</p>
-                <div class="mt-1.5 flex items-center space-x-2">
-                  <button type="button" onclick="copyGASScriptCode()" class="inline-flex items-center px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-medium transition">
-                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                    Salin Kode Google Apps Script
-                  </button>
-                  <span id="gasCopyNote" class="text-emerald-600 text-[11px] font-semibold hidden">Tersalin!</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="flex space-x-2.5">
-              <span class="w-5 h-5 shrink-0 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-[10px]">3</span>
-              <div>
-                <p class="font-semibold text-slate-800">Deploy sebagai Web App:</p>
-                <p class="mt-0.5">Klik tombol biru <strong>Terapkan (Deploy)</strong> &rarr; <strong>Kelola Penerepan Baru (New deployment)</strong> &rarr; Pilih jenis <strong>Aplikasi Web (Web app)</strong>.</p>
-                <ul class="list-disc pl-4 mt-1 space-y-0.5 text-slate-500 text-[11px]">
-                  <li>Jalankan sebagai: <strong>Saya (email Anda)</strong></li>
-                  <li>Siapa yang memiliki akses: <strong>Siapa saja (Anyone)</strong> &larr; <em>Sangat penting!</em></li>
-                </ul>
-              </div>
-            </div>
-
-            <div class="flex space-x-2.5">
-              <span class="w-5 h-5 shrink-0 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-[10px]">4</span>
-              <div>
-                <p class="font-semibold text-slate-800">Salin URL & Masukkan ke Aplikasi:</p>
-                <p class="mt-0.5">Salin URL Web App yang berakhiran <code class="bg-slate-100 px-1 py-0.5 rounded font-mono">/exec</code>, tempel ke input URL di atas, lalu klik <strong>Simpan & Hubungkan</strong>.</p>
-              </div>
-            </div>
-
-            <div class="flex space-x-2.5 pt-2 border-t border-slate-100">
-              <span class="w-5 h-5 shrink-0 rounded-full bg-slate-800 text-white font-bold flex items-center justify-center text-[10px]">★</span>
-              <div>
-                <p class="font-semibold text-slate-800">Hosting di GitHub Pages (Akses Semua Device):</p>
-                <p class="mt-0.5 text-slate-500">Buat repository baru di GitHub &rarr; upload file <code class="font-mono bg-slate-100 px-1 py-0.5 rounded">index.html</code> ini &rarr; buka <strong>Settings &gt; Pages &gt; Deploy from Branch (main)</strong>. Buka tautan GitHub Pages di HP atau laptop Anda untuk mengakses data yang tersinkron otomatis!</p>
-              </div>
-            </div>
-          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="cloudAutoSyncCheck" class="sr-only peer" onchange="toggleAutoSyncSetting(this.checked)">
+            <div class="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+          </label>
         </div>
       </div>
 
-      <div class="flex items-center justify-end space-x-2 pt-4 border-t border-slate-100 mt-4">
-        <button type="button" onclick="closeCloudModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 rounded-lg">Tutup</button>
-        <button type="button" onclick="saveCloudUrlAndTest()" class="px-4 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition flex items-center">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-          Simpan & Hubungkan
-        </button>
+      <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100 mt-2">
+        <button type="button" onclick="closeCloudModal()" class="px-4 py-2 text-xs font-bold text-slate-600 rounded-xl">Tutup</button>
+        <button type="button" onclick="saveCloudUrlAndTest()" class="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm">Simpan URL</button>
       </div>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- CUSTOM CONFIRMATION MODAL (No window.confirm) -->
-  <!-- ========================================== -->
+  <!-- MODAL: CONFIRMATION DIALOG -->
   <div id="confirmModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl relative text-center">
-      <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-600 mx-auto flex items-center justify-center mb-3">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 shadow-2xl relative text-center">
+      <div class="w-11 h-11 rounded-full bg-amber-100 text-amber-600 mx-auto flex items-center justify-center mb-2.5">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
       </div>
-      <h4 id="confirmModalTitle" class="text-base font-bold text-slate-900">Konfirmasi Aksi</h4>
-      <p id="confirmModalMessage" class="text-xs text-slate-500 mt-1 mb-5">Apakah Anda yakin ingin melanjutkan tindakan ini?</p>
+      <h4 id="confirmModalTitle" class="text-sm font-bold text-slate-900">Konfirmasi Aksi</h4>
+      <p id="confirmModalMessage" class="text-xs text-slate-500 mt-1 mb-4">Apakah Anda yakin ingin melanjutkan tindakan ini?</p>
       <div class="flex items-center justify-center space-x-2">
-        <button id="confirmCancelBtn" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg">Batal</button>
-        <button id="confirmOkBtn" class="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm">Ya, Lanjutkan</button>
+        <button id="confirmCancelBtn" class="px-3.5 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">Batal</button>
+        <button id="confirmOkBtn" class="px-3.5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm">Lanjutkan</button>
       </div>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- TOAST NOTIFICATION CONTAINER               -->
-  <!-- ========================================== -->
-  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-20 sm:bottom-4 right-4 left-4 sm:left-auto z-50 flex flex-col space-y-2 pointer-events-none sm:max-w-sm"></div>
 
   <script>
-    /**
-     * Storage Key & Default Template Data
-     */
     const STORAGE_KEY = 'HPP_CALCULATOR_PRO_DATA_V2';
+    const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbzrM3a9X_sXktdLIAGtX9kdr9b_BtFmn7UdrTUb-hZhiWbadMMJyJzasDHutHcifaIiPA/exec';
+    const CLOUD_CONFIG_KEY = 'HPP_GOOGLE_SHEET_CONFIG_V1';
 
-    // Sample default data tailored for coffee shops / F&B businesses
     const DEFAULT_DATA = {
       rawMaterials: [
         { id: 'rm_1', name: 'Biji Kopi House Blend Espresso', category: 'Powder/Beans', unit: 'gram', packPrice: 160000, packSize: 1000, costPerUnit: 160 },
@@ -710,10 +682,10 @@
           name: 'Susu Blend Base (Super Creamy)',
           yieldUnit: 'gram',
           items: [
-            { rawId: 'rm_5', amount: 10 },  // Krimer 10g
-            { rawId: 'rm_3', amount: 35 },  // Evaporasi 35g
-            { rawId: 'rm_4', amount: 15 },  // SKM 15g
-            { rawId: 'rm_2', amount: 70 }   // UHT 70ml
+            { rawId: 'rm_5', amount: 10 },
+            { rawId: 'rm_3', amount: 35 },
+            { rawId: 'rm_4', amount: 15 },
+            { rawId: 'rm_2', amount: 70 }
           ],
           totalYield: 130,
           totalCost: 4000.3,
@@ -726,30 +698,26 @@
           name: 'Es Kopi Susu Creamy Aren 16oz',
           category: 'Coffee',
           items: [
-            { type: 'raw', id: 'rm_1', amount: 18 },       // 18g double shot coffee
-            { type: 'premix', id: 'pm_1', amount: 120 },   // 120g Premix Susu Blend Base
-            { type: 'raw', id: 'rm_6', amount: 25 },       // 25ml Aren
-            { type: 'raw', id: 'rm_7', amount: 1 },        // 1 Cup
-            { type: 'raw', id: 'rm_8', amount: 1 },        // 1 Sedotan
-            { type: 'raw', id: 'rm_9', amount: 1 }         // 1 Plastik
+            { type: 'raw', id: 'rm_1', amount: 18 },
+            { type: 'premix', id: 'pm_1', amount: 120 },
+            { type: 'raw', id: 'rm_6', amount: 25 },
+            { type: 'raw', id: 'rm_7', amount: 1 },
+            { type: 'raw', id: 'rm_8', amount: 1 },
+            { type: 'raw', id: 'rm_9', amount: 1 }
           ],
-          additionalCost: 350, // Es batu kristal & stiker cup
+          additionalCost: 350,
           targetMarginPercent: 65,
           actualSellingPrice: 25000
         }
       ]
     };
 
-    // Global application state
     let state = {
       rawMaterials: [],
       premixes: [],
       recipes: []
     };
 
-    // Cloud synchronization state - URL Google Apps Script Aktif
-    const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbzrM3a9X_sXktdLIAGtX9kdr9b_BtFmn7UdrTUb-hZhiWbadMMJyJzasDHutHcifaIiPA/exec';
-    const CLOUD_CONFIG_KEY = 'HPP_GOOGLE_SHEET_CONFIG_V1';
     let cloudConfig = {
       appUrl: DEFAULT_GAS_URL,
       autoSync: true,
@@ -758,6 +726,7 @@
     };
 
     let autoSyncDebounceTimer = null;
+    let currentTab = 1;
 
     function loadCloudConfig() {
       try {
@@ -765,12 +734,10 @@
         if (saved) {
           cloudConfig = { ...cloudConfig, ...JSON.parse(saved) };
         }
-        // Prioritaskan URL Web App yang telah dideploy pengguna
         if (!cloudConfig.appUrl) {
           cloudConfig.appUrl = DEFAULT_GAS_URL;
         }
       } catch (e) {
-        console.error('Error loading cloud config', e);
         cloudConfig.appUrl = DEFAULT_GAS_URL;
       }
       saveCloudConfig();
@@ -782,7 +749,7 @@
         localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(cloudConfig));
         updateCloudStatusUI();
       } catch (e) {
-        console.error('Error saving cloud config', e);
+        console.error('Save cloud config error', e);
       }
     }
 
@@ -791,7 +758,6 @@
       const btnText = document.getElementById('cloudBtnText');
       const badge = document.getElementById('cloudStatusBadge');
       const lastSyncText = document.getElementById('cloudLastSyncText');
-      const note = document.getElementById('cloudStatusNote');
       const urlInput = document.getElementById('cloudAppUrlInput');
       const autoSyncCheck = document.getElementById('cloudAutoSyncCheck');
 
@@ -799,82 +765,40 @@
       if (autoSyncCheck) autoSyncCheck.checked = !!cloudConfig.autoSync;
 
       if (!cloudConfig.appUrl) {
-        if (dot) dot.className = 'w-2 h-2 rounded-full bg-slate-400 mr-1.5';
-        if (btnText) btnText.textContent = 'Setup Cloud';
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-slate-400 mr-1.5 shrink-0';
+        if (btnText) btnText.textContent = 'Setup';
         if (badge) {
-          badge.className = 'px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-200 text-slate-700';
-          badge.textContent = 'Belum Terhubung';
+          badge.className = 'px-2 py-0.5 font-bold rounded-full bg-slate-200 text-slate-700 text-[10px]';
+          badge.textContent = 'Off';
         }
-        if (note) note.textContent = 'Google Sheet belum dikonfigurasi. Ikuti panduan di bawah.';
       } else if (cloudConfig.syncing) {
-        if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-ping mr-1.5';
-        if (btnText) btnText.textContent = 'Menyinkronkan...';
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-ping mr-1.5 shrink-0';
+        if (btnText) btnText.textContent = 'Sync...';
         if (badge) {
-          badge.className = 'px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800';
-          badge.textContent = 'Sinkronisasi...';
+          badge.className = 'px-2 py-0.5 font-bold rounded-full bg-amber-100 text-amber-800 text-[10px]';
+          badge.textContent = 'Syncing';
         }
       } else {
-        if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500 mr-1.5';
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500 mr-1.5 shrink-0';
         if (btnText) btnText.textContent = 'Cloud Aktif';
         if (badge) {
-          badge.className = 'px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800';
+          badge.className = 'px-2 py-0.5 font-bold rounded-full bg-emerald-100 text-emerald-800 text-[10px]';
           badge.textContent = 'Tersambung Google Sheet';
         }
-        if (note) note.textContent = 'Perubahan data otomatis sinkron ke Google Sheet Anda.';
       }
 
       if (lastSyncText) {
         if (cloudConfig.lastSynced) {
           const d = new Date(cloudConfig.lastSynced);
-          lastSyncText.textContent = `Terakhir: ${d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+          lastSyncText.textContent = `Terakhir: ${d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
         } else {
           lastSyncText.textContent = 'Terakhir: Belum ada';
         }
       }
     }
 
-    function openCloudModal() {
-      loadCloudConfig();
-      document.getElementById('cloudModal').classList.remove('hidden');
-    }
-
-    function closeCloudModal() {
-      document.getElementById('cloudModal').classList.add('hidden');
-    }
-
-    function toggleAutoSyncSetting(val) {
-      cloudConfig.autoSync = val;
-      saveCloudConfig();
-      showToast(val ? 'Auto-sync diaktifkan' : 'Auto-sync dimatikan');
-    }
-
-    function saveCloudUrlAndTest() {
-      const url = (document.getElementById('cloudAppUrlInput').value || '').trim();
-      if (!url) {
-        cloudConfig.appUrl = '';
-        saveCloudConfig();
-        showToast('URL Google Apps Script dikosongkan');
-        return;
-      }
-
-      if (!url.startsWith('https://script.google.com/macros/s/')) {
-        showToast('Format URL Apps Script tidak valid (harus dimulai dengan https://script.google.com/macros/s/)', 'error');
-        return;
-      }
-
-      cloudConfig.appUrl = url;
-      saveCloudConfig();
-      showToast('Menyimpan & menguji koneksi Google Sheet...');
-      pullFromGoogleSheet(true);
-    }
-
-    /* Push current data to Google Sheets via POST */
     async function pushToGoogleSheet(manual = false) {
-      if (!cloudConfig.appUrl) {
-        if (manual) showToast('Masukkan URL Google Apps Script terlebih dahulu', 'error');
-        return;
-      }
-
+      if (!cloudConfig.appUrl) return;
       cloudConfig.syncing = true;
       updateCloudStatusUI();
 
@@ -885,81 +809,64 @@
           state: state
         };
 
-        const response = await fetch(cloudConfig.appUrl, {
+        const res = await fetch(cloudConfig.appUrl, {
           method: 'POST',
           mode: 'cors',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8'
-          },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(payload)
         });
 
-        const result = await response.json();
+        const result = await res.json();
         if (result && result.status === 'success') {
           cloudConfig.lastSynced = new Date().toISOString();
           cloudConfig.syncing = false;
           saveCloudConfig();
-          if (manual) showToast('Data berhasil di-upload ke Google Sheets!');
+          if (manual) showToast('Data sukses terkirim ke Google Sheets!');
         } else {
-          throw new Error(result ? result.message : 'Unknown response');
+          throw new Error('Respon server gagal');
         }
       } catch (err) {
-        console.error('Push error:', err);
         cloudConfig.syncing = false;
         updateCloudStatusUI();
-        if (manual) showToast('Gagal mengupload ke Google Sheets: ' + err.message, 'error');
+        if (manual) showToast('Gagal sinkron ke Google Sheets', 'error');
       }
     }
 
-    /* Pull latest data from Google Sheets via GET */
     async function pullFromGoogleSheet(manual = false) {
-      if (!cloudConfig.appUrl) {
-        if (manual) showToast('Masukkan URL Google Apps Script terlebih dahulu', 'error');
-        return;
-      }
-
+      if (!cloudConfig.appUrl) return;
       cloudConfig.syncing = true;
       updateCloudStatusUI();
 
       try {
-        const urlWithParam = cloudConfig.appUrl + (cloudConfig.appUrl.includes('?') ? '&' : '?') + 'action=get&t=' + Date.now();
-        const response = await fetch(urlWithParam, {
-          method: 'GET',
-          mode: 'cors'
-        });
+        const url = cloudConfig.appUrl + (cloudConfig.appUrl.includes('?') ? '&' : '?') + 'action=get&t=' + Date.now();
+        const res = await fetch(url, { method: 'GET', mode: 'cors' });
+        const result = await res.json();
 
-        const result = await response.json();
         if (result && result.status === 'success') {
           if (result.data && result.data.state && Array.isArray(result.data.state.rawMaterials)) {
-            // Apply loaded state
             state = result.data.state;
             recalculateAllPremixesAndRecipes();
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
             renderRawMaterials();
             renderPremixes();
             renderRecipes();
-            updateHeaderBadges();
-            if (manual) showToast('Data berhasil ditarik dari Google Sheets!');
+            updateAllBadges();
+            if (manual) showToast('Data sukses ditarik dari Google Sheets!');
           } else {
-            // Cloud is empty, auto-push initial state
-            if (manual) showToast('Google Sheet masih kosong, mengirim data lokal saat ini...');
+            // First time push
             await pushToGoogleSheet(false);
           }
           cloudConfig.lastSynced = new Date().toISOString();
           cloudConfig.syncing = false;
           saveCloudConfig();
-        } else {
-          throw new Error(result ? result.message : 'Respon gagal');
         }
       } catch (err) {
-        console.error('Pull error:', err);
         cloudConfig.syncing = false;
         updateCloudStatusUI();
-        if (manual) showToast('Gagal membaca data dari Google Sheets. Pastikan akses diset "Anyone"', 'error');
+        if (manual) showToast('Gagal menarik data dari Google Sheets', 'error');
       }
     }
 
-    /* Trigger auto-sync with 1.5s debounce to avoid quota overflow */
     function triggerAutoCloudSync() {
       if (!cloudConfig.appUrl || !cloudConfig.autoSync) return;
       if (autoSyncDebounceTimer) clearTimeout(autoSyncDebounceTimer);
@@ -968,265 +875,98 @@
       }, 1500);
     }
 
-    /* Template Google Apps Script Code for user's Google Sheet */
-    const GAS_CODE_TEMPLATE = `/**
- * BACKEND SYNC GOOGLE SHEETS - KALKULATOR HPP F&B PRO
- * Pasang di Google Sheet: Ekstensi > Apps Script
- */
-
-function doGet(e) {
-  try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = getOrCreateSyncSheet(ss);
-    var raw = sheet.getRange("A1").getValue();
-    var data = raw ? JSON.parse(raw) : null;
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      status: "success",
-      data: data
-    })).setMimeType(ContentService.MimeType.JSON);
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({
-      status: "error",
-      message: err.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function doPost(e) {
-  try {
-    var contents = e.postData.contents;
-    var payload = JSON.parse(contents);
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    
-    // Simpan payload JSON lengkap di sheet tersembunyi
-    var syncSheet = getOrCreateSyncSheet(ss);
-    syncSheet.getRange("A1").setValue(JSON.stringify(payload));
-    syncSheet.getRange("B1").setValue(new Date().toISOString());
-
-    // Update sheet tabel yang mudah dibaca manusia
-    if (payload.state) {
-      updateHumanReadableSheets(ss, payload.state);
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      status: "success",
-      timestamp: new Date().toISOString()
-    })).setMimeType(ContentService.MimeType.JSON);
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({
-      status: "error",
-      message: err.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function getOrCreateSyncSheet(ss) {
-  var sheetName = "_APP_SYNC_DATA";
-  var sheet = ss.getSheetByName(sheetName);
-  if (!sheet) {
-    sheet = ss.insertSheet(sheetName);
-    sheet.hideSheet();
-  }
-  return sheet;
-}
-
-function updateHumanReadableSheets(ss, state) {
-  // 1. Sheet Bahan Baku
-  var rmSheet = ss.getSheetByName("Master Bahan");
-  if (!rmSheet) rmSheet = ss.insertSheet("Master Bahan");
-  rmSheet.clear();
-  rmSheet.appendRow(["ID", "Nama Bahan Baku", "Kategori", "Satuan", "Harga Kemasan", "Isi Kemasan", "HPP per Unit"]);
-  rmSheet.getRange("A1:G1").setFontWeight("bold").setBackground("#d1fae5");
-  if (state.rawMaterials && state.rawMaterials.length > 0) {
-    var rmRows = state.rawMaterials.map(function(r) {
-      return [r.id, r.name, r.category, r.unit, r.packPrice, r.packSize, r.costPerUnit];
-    });
-    rmSheet.getRange(2, 1, rmRows.length, 7).setValues(rmRows);
-  }
-
-  // 2. Sheet Sub-Resep / Premix
-  var pmSheet = ss.getSheetByName("Sub-Resep Premix");
-  if (!pmSheet) pmSheet = ss.insertSheet("Sub-Resep Premix");
-  pmSheet.clear();
-  pmSheet.appendRow(["ID", "Nama Racikan Premix", "Satuan Hasil", "Total Yield", "Total Modal Batch", "HPP per Satuan"]);
-  pmSheet.getRange("A1:F1").setFontWeight("bold").setBackground("#ccfbf1");
-  if (state.premixes && state.premixes.length > 0) {
-    var pmRows = state.premixes.map(function(p) {
-      return [p.id, p.name, p.yieldUnit, p.totalYield, p.totalCost, p.costPerUnit];
-    });
-    pmSheet.getRange(2, 1, pmRows.length, 6).setValues(pmRows);
-  }
-
-  // 3. Sheet Menu Jadi
-  var rcSheet = ss.getSheetByName("Menu Jadi Final");
-  if (!rcSheet) rcSheet = ss.insertSheet("Menu Jadi Final");
-  rcSheet.clear();
-  rcSheet.appendRow(["ID", "Nama Menu", "Kategori", "Overhead Tambahan", "Target Margin (%)", "Harga Jual"]);
-  rcSheet.getRange("A1:F1").setFontWeight("bold").setBackground("#fed7aa");
-  if (state.recipes && state.recipes.length > 0) {
-    var rcRows = state.recipes.map(function(c) {
-      return [c.id, c.name, c.category, c.additionalCost, c.targetMarginPercent, c.actualSellingPrice];
-    });
-    rcSheet.getRange(2, 1, rcRows.length, 6).setValues(rcRows);
-  }
-}`;
-
-    function copyGASScriptCode() {
-      const temp = document.createElement('textarea');
-      temp.value = GAS_CODE_TEMPLATE;
-      document.body.appendChild(temp);
-      temp.select();
-      document.execCommand('copy');
-      document.body.removeChild(temp);
-
-      const note = document.getElementById('gasCopyNote');
-      if (note) {
-        note.classList.remove('hidden');
-        setTimeout(() => note.classList.add('hidden'), 2500);
-      }
-      showToast('Kode Google Apps Script disalin ke clipboard!');
-    }
-
-    function loadState() {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          state = JSON.parse(saved);
-        } else {
-          state = JSON.parse(JSON.stringify(DEFAULT_DATA));
-          saveState();
-        }
-      } catch (err) {
-        console.error("Gagal memuat state dari LocalStorage", err);
-        state = JSON.parse(JSON.stringify(DEFAULT_DATA));
-      }
-    }
-
-    function saveState() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        updateHeaderBadges();
-        triggerAutoCloudSync();
-      } catch (err) {
-        showToast('Gagal menyimpan ke penyimpanan lokal browser', 'error');
-      }
-    }
-
-    function updateHeaderBadges() {
-      document.getElementById('badgeRawCount').textContent = state.rawMaterials.length;
-      document.getElementById('badgePremixCount').textContent = state.premixes.length;
-      document.getElementById('badgeRecipeCount').textContent = state.recipes.length;
-    }
-
-    function formatRp(val) {
-      if (isNaN(val) || val === null || val === undefined) return 'Rp 0';
-      return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 1
-      }).format(val).replace(/\s/g, ' ');
-    }
-
-    function formatNumber(val, decimals = 1) {
-      if (isNaN(val)) return '0';
-      return Number(val).toLocaleString('id-ID', {
-        maximumFractionDigits: decimals
-      });
-    }
-
-    function showToast(message, type = 'success') {
-      const container = document.getElementById('toastContainer');
-      const toast = document.createElement('div');
-      toast.className = `transform transition duration-300 ease-out translate-y-2 opacity-0 p-3.5 rounded-xl shadow-lg border text-xs font-semibold flex items-center space-x-2 pointer-events-auto ${
-        type === 'success' 
-          ? 'bg-emerald-900 text-white border-emerald-700' 
-          : type === 'error' 
-          ? 'bg-rose-900 text-white border-rose-700' 
-          : 'bg-slate-900 text-white border-slate-700'
-      }`;
-
-      const icon = type === 'success'
-        ? `<svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
-        : `<svg class="w-4 h-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
-
-      toast.innerHTML = `${icon}<span>${message}</span>`;
-      container.appendChild(toast);
-
-      // Animate in
-      setTimeout(() => {
-        toast.classList.remove('translate-y-2', 'opacity-0');
-      }, 20);
-
-      // Auto dismiss
-      setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-y-2');
-        setTimeout(() => toast.remove(), 300);
-      }, 3200);
-    }
-
-    function openConfirm(title, message, onConfirm) {
-      const modal = document.getElementById('confirmModal');
-      document.getElementById('confirmModalTitle').textContent = title;
-      document.getElementById('confirmModalMessage').textContent = message;
-
-      const cancelBtn = document.getElementById('confirmCancelBtn');
-      const okBtn = document.getElementById('confirmOkBtn');
-
-      const cleanup = () => {
-        modal.classList.add('hidden');
-        cancelBtn.onclick = null;
-        okBtn.onclick = null;
-      };
-
-      cancelBtn.onclick = cleanup;
-      okBtn.onclick = () => {
-        cleanup();
-        onConfirm();
-      };
-
-      modal.classList.remove('hidden');
-    }
-
     function switchTab(tabIndex) {
-      // Hide all contents
-      document.getElementById('tabContent1').classList.add('hidden');
-      document.getElementById('tabContent2').classList.add('hidden');
-      document.getElementById('tabContent3').classList.add('hidden');
+      currentTab = tabIndex;
+      const titles = ['Master Bahan', 'Sub-Resep', 'Resep Menu'];
+      document.getElementById('activePageBadge').textContent = titles[tabIndex - 1];
 
-      // Reset button styles
+      // Hide all page contents
       for (let i = 1; i <= 3; i++) {
-        const btn = document.getElementById(`tabBtn${i}`);
-        btn.className = "flex-1 py-3 px-4 rounded-xl text-sm font-semibold flex items-center justify-center transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100";
-        const badge = btn.querySelector('span');
-        if (badge) {
-          badge.className = "ml-2 px-2 py-0.5 text-xs rounded-full bg-slate-200 text-slate-700";
+        const page = document.getElementById(`pageContent${i}`);
+        if (page) page.classList.add('hidden');
+
+        // Reset Desktop Top Buttons
+        const deskBtn = document.getElementById(`deskTabBtn${i}`);
+        if (deskBtn) {
+          deskBtn.className = "flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center transition-all text-slate-600 hover:bg-slate-100";
+          const deskBadge = deskBtn.querySelector('span');
+          if (deskBadge) deskBadge.className = "ml-2 px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700 text-[10px]";
+        }
+
+        // Reset Mobile Bottom Nav Buttons
+        const mobBtn = document.getElementById(`mobileNavBtn${i}`);
+        if (mobBtn) {
+          mobBtn.className = "flex flex-col items-center justify-center text-slate-400 relative transition-all";
+          const mobTitle = mobBtn.querySelector('span:last-child');
+          if (mobTitle) mobTitle.className = "text-[11px] font-medium mt-1";
+          const mobBadge = mobBtn.querySelector('span:first-child');
+          if (mobBadge) mobBadge.className = "absolute -top-1.5 -right-3 px-1.5 py-0.2 text-[9px] font-bold rounded-full bg-slate-300 text-slate-700";
         }
       }
 
-      // Activate chosen tab
-      const activeBtn = document.getElementById(`tabBtn${tabIndex}`);
-      activeBtn.className = "flex-1 py-3 px-4 rounded-xl text-sm font-semibold flex items-center justify-center transition-all bg-emerald-600 text-white shadow-sm";
-      const activeBadge = activeBtn.querySelector('span');
-      if (activeBadge) {
-        activeBadge.className = "ml-2 px-2 py-0.5 text-xs rounded-full bg-emerald-700 text-emerald-100";
+      // Activate active page
+      const activePage = document.getElementById(`pageContent${tabIndex}`);
+      if (activePage) activePage.classList.remove('hidden');
+
+      // Highlight Desktop active
+      const activeDeskBtn = document.getElementById(`deskTabBtn${tabIndex}`);
+      if (activeDeskBtn) {
+        activeDeskBtn.className = "flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center transition-all bg-emerald-600 text-white shadow-sm";
+        const deskBadge = activeDeskBtn.querySelector('span');
+        if (deskBadge) deskBadge.className = "ml-2 px-1.5 py-0.2 rounded-full bg-emerald-700 text-white text-[10px]";
       }
 
-      document.getElementById(`tabContent${tabIndex}`).classList.remove('hidden');
+      // Highlight Mobile active
+      const activeMobBtn = document.getElementById(`mobileNavBtn${tabIndex}`);
+      if (activeMobBtn) {
+        activeMobBtn.className = "flex flex-col items-center justify-center text-emerald-600 relative transition-all";
+        const mobTitle = activeMobBtn.querySelector('span:last-child');
+        if (mobTitle) mobTitle.className = "text-[11px] font-bold mt-1";
+        const mobBadge = activeMobBtn.querySelector('span:first-child');
+        if (mobBadge) mobBadge.className = "absolute -top-1.5 -right-3 px-1.5 py-0.2 text-[9px] font-bold rounded-full bg-emerald-600 text-white";
+      }
 
+      // Re-render corresponding page content
       if (tabIndex === 1) renderRawMaterials();
       if (tabIndex === 2) renderPremixes();
       if (tabIndex === 3) renderRecipes();
+
+      // Scroll smoothly to top of the page
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    /* ========================================================= */
-    /* MODULE 1: MASTER BAHAN BAKU (RAW MATERIALS) LOGIC         */
-    /* ========================================================= */
+    function updateAllBadges() {
+      const rawCount = state.rawMaterials.length;
+      const premixCount = state.premixes.length;
+      const recipeCount = state.recipes.length;
+
+      document.getElementById('deskBadgeRaw').textContent = rawCount;
+      document.getElementById('deskBadgePremix').textContent = premixCount;
+      document.getElementById('deskBadgeRecipe').textContent = recipeCount;
+
+      document.getElementById('mobileBadgeRaw').textContent = rawCount;
+      document.getElementById('mobileBadgePremix').textContent = premixCount;
+      document.getElementById('mobileBadgeRecipe').textContent = recipeCount;
+    }
+
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobileMenuDropdown');
+      menu.classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('mobileMenuDropdown');
+      if (!dropdown) return;
+      if (!e.target.closest('#mobileMenuDropdown') && !e.target.closest('[aria-label="Menu Opsi"]')) {
+        dropdown.classList.add('hidden');
+      }
+    });
 
     function renderRawMaterials() {
       const search = (document.getElementById('rawSearch')?.value || '').toLowerCase();
       const catFilter = document.getElementById('rawCategoryFilter')?.value || 'ALL';
-      const tbody = document.getElementById('rawMaterialsTableBody');
+      const cardContainer = document.getElementById('rawMobileCardContainer');
+      const tableBody = document.getElementById('rawMaterialsTableBody');
       const emptyState = document.getElementById('rawEmptyState');
 
       const filtered = state.rawMaterials.filter(item => {
@@ -1236,52 +976,70 @@ function updateHumanReadableSheets(ss, state) {
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = '';
+        if (cardContainer) cardContainer.innerHTML = '';
+        if (tableBody) tableBody.innerHTML = '';
         emptyState.classList.remove('hidden');
         return;
       }
 
       emptyState.classList.add('hidden');
-      tbody.innerHTML = filtered.map(item => {
-        const unitCost = item.packSize > 0 ? (item.packPrice / item.packSize) : 0;
-        
-        let catBadgeColor = 'bg-slate-100 text-slate-700';
-        if (item.category === 'Liquid') catBadgeColor = 'bg-blue-50 text-blue-700 border border-blue-200';
-        else if (item.category === 'Powder/Beans') catBadgeColor = 'bg-amber-50 text-amber-700 border border-amber-200';
-        else if (item.category === 'Packaging') catBadgeColor = 'bg-purple-50 text-purple-700 border border-purple-200';
 
-        return `
-          <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-            <td class="py-3 px-4 font-semibold text-slate-800">
-              ${escapeHtml(item.name)}
-            </td>
-            <td class="py-3 px-4">
-              <span class="px-2 py-0.5 text-xs rounded-full font-medium ${catBadgeColor}">
-                ${escapeHtml(item.category)}
-              </span>
-            </td>
-            <td class="py-3 px-4 text-right text-slate-700">
-              ${formatRp(item.packPrice)}
-            </td>
-            <td class="py-3 px-4 text-right text-slate-700 font-mono text-xs">
-              ${formatNumber(item.packSize)} ${item.unit}
-            </td>
-            <td class="py-3 px-4 text-right bg-emerald-50/40 text-emerald-800 font-bold font-mono">
-              ${formatRp(unitCost)} <span class="text-[11px] font-normal text-emerald-600">/${item.unit}</span>
-            </td>
-            <td class="py-3 px-4 text-center no-print">
-              <div class="flex items-center justify-center space-x-1.5">
-                <button onclick="editRawMaterial('${item.id}')" title="Edit Bahan" class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+      // 1. Mobile Cards Render
+      if (cardContainer) {
+        cardContainer.innerHTML = filtered.map(item => {
+          const unitCost = item.packSize > 0 ? (item.packPrice / item.packSize) : 0;
+          return `
+            <div class="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-2.5">
+              <div class="flex items-start justify-between">
+                <div>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">${escapeHtml(item.category)}</span>
+                  <h3 class="text-sm font-bold text-slate-900 mt-1">${escapeHtml(item.name)}</h3>
+                  <div class="text-[11px] text-slate-500 mt-0.5 font-mono">Beli: ${formatRp(item.packPrice)} / ${formatNumber(item.packSize)} ${item.unit}</div>
+                </div>
+                <div class="text-right">
+                  <span class="text-[10px] text-emerald-700 block font-semibold">HPP per ${item.unit}:</span>
+                  <span class="text-base font-extrabold text-emerald-800 font-mono">${formatRp(unitCost)}</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+                <button onclick="editRawMaterial('${item.id}')" class="px-3 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition active:scale-95">
+                  Edit
                 </button>
-                <button onclick="confirmDeleteRaw('${item.id}')" title="Hapus Bahan" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                <button onclick="confirmDeleteRaw('${item.id}')" class="px-3 py-1.5 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition active:scale-95">
+                  Hapus
                 </button>
               </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
+            </div>
+          `;
+        }).join('');
+      }
+
+      // 2. Desktop Table Render
+      if (tableBody) {
+        tableBody.innerHTML = filtered.map(item => {
+          const unitCost = item.packSize > 0 ? (item.packPrice / item.packSize) : 0;
+          return `
+            <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+              <td class="py-3 px-4 font-bold text-slate-800">${escapeHtml(item.name)}</td>
+              <td class="py-3 px-4 text-xs font-semibold text-slate-600">${escapeHtml(item.category)}</td>
+              <td class="py-3 px-4 text-right text-slate-700 font-mono text-xs">${formatRp(item.packPrice)}</td>
+              <td class="py-3 px-4 text-right text-slate-700 font-mono text-xs">${formatNumber(item.packSize)} ${item.unit}</td>
+              <td class="py-3 px-4 text-right bg-emerald-50/50 text-emerald-800 font-bold font-mono">${formatRp(unitCost)} / ${item.unit}</td>
+              <td class="py-3 px-4 text-center">
+                <div class="flex items-center justify-center space-x-1.5">
+                  <button onclick="editRawMaterial('${item.id}')" class="p-1.5 text-slate-500 hover:text-emerald-600 rounded-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                  </button>
+                  <button onclick="confirmDeleteRaw('${item.id}')" class="p-1.5 text-slate-500 hover:text-rose-600 rounded-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
     }
 
     function openRawModal(id = null) {
@@ -1331,28 +1089,20 @@ function updateHumanReadableSheets(ss, state) {
       const packPrice = parseFloat(document.getElementById('rawPackPrice').value) || 0;
       const packSize = parseFloat(document.getElementById('rawPackSize').value) || 1;
 
-      if (!name) {
-        showToast('Nama bahan baku tidak boleh kosong', 'error');
-        return;
-      }
-
+      if (!name) return showToast('Nama bahan tidak boleh kosong', 'error');
       const costPerUnit = packSize > 0 ? (packPrice / packSize) : 0;
 
       if (id) {
-        // Update existing
         const idx = state.rawMaterials.findIndex(x => x.id === id);
         if (idx !== -1) {
           state.rawMaterials[idx] = { id, name, category, unit, packPrice, packSize, costPerUnit };
-          showToast(`Bahan baku "${name}" berhasil diperbarui`);
+          showToast(`Bahan "${name}" diperbarui`);
         }
       } else {
-        // Create new
-        const newId = 'rm_' + Date.now();
-        state.rawMaterials.push({ id: newId, name, category, unit, packPrice, packSize, costPerUnit });
-        showToast(`Bahan baku "${name}" berhasil ditambahkan`);
+        state.rawMaterials.push({ id: 'rm_' + Date.now(), name, category, unit, packPrice, packSize, costPerUnit });
+        showToast(`Bahan "${name}" ditambahkan`);
       }
 
-      // Recompute premixes and recipes cost automatically when raw price updates
       recalculateAllPremixesAndRecipes();
       saveState();
       renderRawMaterials();
@@ -1367,27 +1117,14 @@ function updateHumanReadableSheets(ss, state) {
       const item = state.rawMaterials.find(x => x.id === id);
       if (!item) return;
 
-      // Check dependency in premix or recipe
-      const usedInPremix = state.premixes.some(p => p.items.some(pi => pi.rawId === id));
-      const usedInRecipe = state.recipes.some(r => r.items.some(ri => ri.type === 'raw' && ri.id === id));
-
-      let msg = `Hapus bahan "${item.name}"?`;
-      if (usedInPremix || usedInRecipe) {
-        msg = `Peringatan! Bahan "${item.name}" sedang digunakan dalam sub-resep atau resep menu jadi. Menghapusnya akan mempengaruhi kalkulasi HPP racikan terkait. Lanjutkan?`;
-      }
-
-      openConfirm('Hapus Bahan Baku', msg, () => {
+      openConfirm('Hapus Bahan Baku', `Hapus bahan "${item.name}"? Perhitungan premix terkait akan diperbarui.`, () => {
         state.rawMaterials = state.rawMaterials.filter(x => x.id !== id);
         recalculateAllPremixesAndRecipes();
         saveState();
         renderRawMaterials();
-        showToast(`Bahan baku "${item.name}" telah dihapus`);
+        showToast(`Bahan "${item.name}" dihapus`);
       });
     }
-
-    /* ========================================================= */
-    /* MODULE 2: MASTER SUB-RESEP / PREMIX (CAMPURAN KHUSUS)     */
-    /* ========================================================= */
 
     function renderPremixes() {
       const container = document.getElementById('premixListContainer');
@@ -1401,7 +1138,6 @@ function updateHumanReadableSheets(ss, state) {
 
       emptyState.classList.add('hidden');
       container.innerHTML = state.premixes.map(pm => {
-        // Build items preview list
         const itemsHtml = pm.items.map(item => {
           const raw = state.rawMaterials.find(r => r.id === item.rawId);
           const rawName = raw ? raw.name : '(Bahan Terhapus)';
@@ -1410,51 +1146,43 @@ function updateHumanReadableSheets(ss, state) {
           return `
             <li class="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-0">
               <span class="text-slate-600 truncate pr-2">${escapeHtml(rawName)}</span>
-              <span class="font-medium text-slate-800 shrink-0 font-mono">${formatNumber(item.amount)} ${rawUnit} <span class="text-slate-400 font-normal">(${formatRp(subCost)})</span></span>
+              <span class="font-mono text-slate-800 shrink-0">${formatNumber(item.amount)} ${rawUnit} <span class="text-slate-400">(${formatRp(subCost)})</span></span>
             </li>
           `;
         }).join('');
 
         return `
-          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition p-5 flex flex-col justify-between">
+          <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col justify-between">
             <div>
               <div class="flex items-start justify-between">
                 <div>
-                  <span class="text-[11px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200">Sub-Resep / Premix</span>
-                  <h3 class="text-base font-bold text-slate-900 mt-1.5">${escapeHtml(pm.name)}</h3>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200">Sub-Resep</span>
+                  <h3 class="text-sm sm:text-base font-bold text-slate-900 mt-1">${escapeHtml(pm.name)}</h3>
                 </div>
-                <div class="flex items-center space-x-1 no-print">
-                  <button onclick="editPremix('${pm.id}')" title="Edit Racikan" class="p-1.5 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 transition">
+                <div class="flex items-center space-x-1">
+                  <button onclick="editPremix('${pm.id}')" class="p-1.5 text-slate-400 hover:text-emerald-600 rounded-lg">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                   </button>
-                  <button onclick="confirmDeletePremix('${pm.id}')" title="Hapus Racikan" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition">
+                  <button onclick="confirmDeletePremix('${pm.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                   </button>
                 </div>
               </div>
 
-              <!-- Composition Preview -->
-              <div class="mt-4 bg-slate-50/70 p-3 rounded-xl border border-slate-100">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Komposisi Racikan:</span>
-                <ul class="space-y-0.5">
-                  ${itemsHtml}
-                </ul>
+              <div class="mt-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Komposisi:</span>
+                <ul class="space-y-0.5">${itemsHtml}</ul>
               </div>
             </div>
 
-            <!-- Premix Financial Summary -->
-            <div class="mt-5 pt-4 border-t border-slate-100 space-y-2">
+            <div class="mt-4 pt-3 border-t border-slate-100 space-y-1.5">
               <div class="flex items-center justify-between text-xs text-slate-600">
                 <span>Total 1 Batch:</span>
                 <span class="font-bold text-slate-900 font-mono">${formatNumber(pm.totalYield)} ${pm.yieldUnit}</span>
               </div>
-              <div class="flex items-center justify-between text-xs text-slate-600">
-                <span>Modal 1 Batch:</span>
-                <span class="font-bold text-slate-900">${formatRp(pm.totalCost)}</span>
-              </div>
-              <div class="p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between">
-                <span class="text-xs font-semibold text-emerald-800">HPP Racikan:</span>
-                <span class="text-sm font-extrabold text-emerald-800 font-mono">${formatRp(pm.costPerUnit)} <span class="text-xs font-normal text-emerald-600">/${pm.yieldUnit}</span></span>
+              <div class="p-2 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between">
+                <span class="text-xs font-bold text-emerald-800">HPP Racikan:</span>
+                <span class="text-sm font-extrabold text-emerald-800 font-mono">${formatRp(pm.costPerUnit)} <span class="text-[10px] font-normal">/${pm.yieldUnit}</span></span>
               </div>
             </div>
           </div>
@@ -1464,7 +1192,7 @@ function updateHumanReadableSheets(ss, state) {
 
     function openPremixModal(id = null) {
       if (state.rawMaterials.length === 0) {
-        showToast('Tambahkan bahan baku di Tab 1 terlebih dahulu sebelum membuat premix', 'error');
+        showToast('Tambahkan bahan baku di Halaman 1 terlebih dahulu', 'error');
         return;
       }
 
@@ -1475,19 +1203,16 @@ function updateHumanReadableSheets(ss, state) {
       if (id) {
         const pm = state.premixes.find(x => x.id === id);
         if (!pm) return;
-        document.getElementById('premixModalTitle').textContent = 'Edit Sub-Resep / Premix';
+        document.getElementById('premixModalTitle').textContent = 'Edit Sub-Resep';
         document.getElementById('premixId').value = pm.id;
         document.getElementById('premixName').value = pm.name;
         document.getElementById('premixYieldUnit').value = pm.yieldUnit || 'gram';
-
         pm.items.forEach(it => addPremixRow(it.rawId, it.amount));
       } else {
         document.getElementById('premixModalTitle').textContent = 'Buat Sub-Resep Baru';
         document.getElementById('premixId').value = '';
         document.getElementById('premixName').value = '';
         document.getElementById('premixYieldUnit').value = 'gram';
-
-        // Add 2 default empty rows for quick start
         addPremixRow();
         addPremixRow();
       }
@@ -1510,23 +1235,23 @@ function updateHumanReadableSheets(ss, state) {
       }).join('');
 
       tr.innerHTML = `
-        <td class="p-2">
-          <select class="premix-raw-select w-full text-xs p-1.5 border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-emerald-500 focus:outline-none" onchange="updatePremixCostSummary()">
-            <option value="">-- Pilih Bahan Baku --</option>
+        <td class="p-1.5">
+          <select class="premix-raw-select w-full text-xs p-1.5 border border-slate-200 rounded-lg bg-white focus:outline-none" onchange="updatePremixCostSummary()">
+            <option value="">-- Pilih Bahan --</option>
             ${options}
           </select>
         </td>
-        <td class="p-2">
+        <td class="p-1.5">
           <div class="flex items-center space-x-1">
-            <input type="number" min="0.01" step="any" value="${amount}" placeholder="Takaran" class="premix-amount-input w-full text-xs p-1.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-emerald-500 focus:outline-none font-mono" oninput="updatePremixCostSummary()">
-            <span class="premix-unit-badge text-[11px] text-slate-400 w-8 text-left font-mono"></span>
+            <input type="number" min="0.01" step="any" value="${amount}" placeholder="Takaran" class="premix-amount-input w-full text-xs p-1.5 border border-slate-200 rounded-lg font-mono" oninput="updatePremixCostSummary()">
+            <span class="premix-unit-badge text-[10px] text-slate-400 w-6 font-mono"></span>
           </div>
         </td>
-        <td class="p-2 text-right font-mono font-semibold text-slate-700 premix-subcost-display">
+        <td class="p-1.5 text-right font-mono font-semibold text-slate-700 premix-subcost-display text-xs">
           Rp 0
         </td>
-        <td class="p-2 text-center">
-          <button type="button" onclick="this.closest('tr').remove(); updatePremixCostSummary();" class="p-1 text-slate-400 hover:text-rose-600 rounded">
+        <td class="p-1.5 text-center">
+          <button type="button" onclick="this.closest('tr').remove(); updatePremixCostSummary();" class="p-1 text-slate-400 hover:text-rose-600">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
         </td>
@@ -1539,9 +1264,7 @@ function updateHumanReadableSheets(ss, state) {
     function updatePremixCostSummary() {
       const rows = document.querySelectorAll('#premixRowsBody tr');
       const yieldUnit = document.getElementById('premixYieldUnit').value;
-
-      let totalYield = 0;
-      let totalCost = 0;
+      let totalYield = 0, totalCost = 0;
 
       rows.forEach(row => {
         const select = row.querySelector('.premix-raw-select');
@@ -1551,14 +1274,13 @@ function updateHumanReadableSheets(ss, state) {
 
         const rawId = select.value;
         const amount = parseFloat(amountInput.value) || 0;
-
         const raw = state.rawMaterials.find(r => r.id === rawId);
+
         if (raw) {
           unitBadge.textContent = raw.unit;
           const cost = raw.costPerUnit * amount;
           subcostDisplay.textContent = formatRp(cost);
           totalCost += cost;
-          // Sum yield if unit is compatible
           totalYield += amount;
         } else {
           unitBadge.textContent = '';
@@ -1567,7 +1289,6 @@ function updateHumanReadableSheets(ss, state) {
       });
 
       const costPerUnit = totalYield > 0 ? (totalCost / totalYield) : 0;
-
       document.getElementById('premixTotalYieldDisplay').textContent = `${formatNumber(totalYield)} ${yieldUnit}`;
       document.getElementById('premixTotalCostDisplay').textContent = formatRp(totalCost);
       document.getElementById('premixUnitCostDisplay').textContent = `${formatRp(costPerUnit)} / ${yieldUnit}`;
@@ -1579,15 +1300,11 @@ function updateHumanReadableSheets(ss, state) {
       const name = document.getElementById('premixName').value.trim();
       const yieldUnit = document.getElementById('premixYieldUnit').value;
 
-      if (!name) {
-        showToast('Nama racikan tidak boleh kosong', 'error');
-        return;
-      }
+      if (!name) return showToast('Nama sub-resep tidak boleh kosong', 'error');
 
       const rows = document.querySelectorAll('#premixRowsBody tr');
       const items = [];
-      let totalYield = 0;
-      let totalCost = 0;
+      let totalYield = 0, totalCost = 0;
 
       rows.forEach(row => {
         const rawId = row.querySelector('.premix-raw-select').value;
@@ -1601,23 +1318,18 @@ function updateHumanReadableSheets(ss, state) {
         }
       });
 
-      if (items.length === 0) {
-        showToast('Minimal masukkan 1 bahan dengan takaran > 0', 'error');
-        return;
-      }
-
+      if (items.length === 0) return showToast('Masukkan minimal 1 bahan', 'error');
       const costPerUnit = totalYield > 0 ? (totalCost / totalYield) : 0;
 
       if (id) {
         const idx = state.premixes.findIndex(x => x.id === id);
         if (idx !== -1) {
           state.premixes[idx] = { id, name, yieldUnit, items, totalYield, totalCost, costPerUnit };
-          showToast(`Sub-resep "${name}" berhasil diperbarui`);
+          showToast(`Sub-resep "${name}" diperbarui`);
         }
       } else {
-        const newId = 'pm_' + Date.now();
-        state.premixes.push({ id: newId, name, yieldUnit, items, totalYield, totalCost, costPerUnit });
-        showToast(`Sub-resep "${name}" berhasil disimpan`);
+        state.premixes.push({ id: 'pm_' + Date.now(), name, yieldUnit, items, totalYield, totalCost, costPerUnit });
+        showToast(`Sub-resep "${name}" disimpan`);
       }
 
       recalculateAllPremixesAndRecipes();
@@ -1634,24 +1346,14 @@ function updateHumanReadableSheets(ss, state) {
       const pm = state.premixes.find(x => x.id === id);
       if (!pm) return;
 
-      const usedInRecipe = state.recipes.some(r => r.items.some(ri => ri.type === 'premix' && ri.id === id));
-      let msg = `Hapus sub-resep "${pm.name}"?`;
-      if (usedInRecipe) {
-        msg = `Peringatan! Sub-resep "${pm.name}" sedang digunakan dalam resep menu jadi. Lanjutkan penghapusan?`;
-      }
-
-      openConfirm('Hapus Sub-Resep', msg, () => {
+      openConfirm('Hapus Sub-Resep', `Hapus sub-resep "${pm.name}"? Resep menu terkait akan terpengaruh.`, () => {
         state.premixes = state.premixes.filter(x => x.id !== id);
         recalculateAllPremixesAndRecipes();
         saveState();
         renderPremixes();
-        showToast(`Sub-resep "${pm.name}" telah dihapus`);
+        showToast(`Sub-resep "${pm.name}" dihapus`);
       });
     }
-
-    /* ========================================================= */
-    /* MODULE 3: RESEP MENU JADI (FINAL PRODUCT) LOGIC           */
-    /* ========================================================= */
 
     function renderRecipes() {
       const container = document.getElementById('recipesListContainer');
@@ -1665,23 +1367,18 @@ function updateHumanReadableSheets(ss, state) {
 
       emptyState.classList.add('hidden');
       container.innerHTML = state.recipes.map(rc => {
-        // Calculate items cost breakdown
         let ingredientsHpp = 0;
         const itemsList = rc.items.map(it => {
-          let name = '';
-          let unit = '';
-          let unitCost = 0;
-          let badge = '';
-
+          let name = '', unit = '', unitCost = 0, badge = '';
           if (it.type === 'raw') {
             const raw = state.rawMaterials.find(x => x.id === it.id);
-            name = raw ? raw.name : '(Bahan Baku Terhapus)';
+            name = raw ? raw.name : '(Bahan Mentah)';
             unit = raw ? raw.unit : '';
             unitCost = raw ? raw.costPerUnit : 0;
-            badge = '<span class="text-[9px] px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded">Bahan Mentah</span>';
+            badge = '<span class="text-[9px] px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded">Mentah</span>';
           } else {
             const pm = state.premixes.find(x => x.id === it.id);
-            name = pm ? pm.name : '(Premix Terhapus)';
+            name = pm ? pm.name : '(Premix)';
             unit = pm ? pm.yieldUnit : '';
             unitCost = pm ? pm.costPerUnit : 0;
             badge = '<span class="text-[9px] px-1.5 py-0.2 bg-teal-50 text-teal-700 font-semibold rounded border border-teal-200">Sub-Resep</span>';
@@ -1692,7 +1389,7 @@ function updateHumanReadableSheets(ss, state) {
 
           return `
             <div class="flex items-center justify-between text-xs py-1 border-b border-slate-50 last:border-0">
-              <div class="flex items-center space-x-2 truncate">
+              <div class="flex items-center space-x-1.5 truncate">
                 ${badge}
                 <span class="text-slate-700 truncate">${escapeHtml(name)}</span>
               </div>
@@ -1711,59 +1408,55 @@ function updateHumanReadableSheets(ss, state) {
         else if (grossMarginPct < 60) marginBadgeColor = 'bg-amber-50 text-amber-800 border-amber-200';
 
         return `
-          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition overflow-hidden">
-            <div class="p-5">
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div>
-                  <div class="flex items-center space-x-2">
-                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">${escapeHtml(rc.category || 'Menu')}</span>
-                    <span class="text-xs font-bold px-2 py-0.5 rounded-full border ${marginBadgeColor}">Margin: ${formatNumber(grossMarginPct, 1)}%</span>
-                  </div>
-                  <h3 class="text-lg font-bold text-slate-900 mt-1">${escapeHtml(rc.name)}</h3>
+          <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 sm:p-5">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${escapeHtml(rc.category || 'Menu')}</span>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${marginBadgeColor}">Margin: ${formatNumber(grossMarginPct, 1)}%</span>
                 </div>
+                <h3 class="text-base font-bold text-slate-900 mt-1">${escapeHtml(rc.name)}</h3>
+              </div>
 
-                <div class="flex items-center space-x-2 no-print">
-                  <button onclick="openPrintModal('${rc.id}')" title="Cetak Ringkasan Resep" class="p-2 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 border border-slate-200 rounded-xl transition flex items-center text-xs font-medium">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                    Ringkasan
-                  </button>
-                  <button onclick="editRecipe('${rc.id}')" title="Edit Resep" class="p-2 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 border border-slate-200 rounded-xl transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                  </button>
-                  <button onclick="confirmDeleteRecipe('${rc.id}')" title="Hapus Resep" class="p-2 text-slate-600 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 rounded-xl transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                  </button>
+              <div class="flex items-center space-x-1 shrink-0">
+                <button onclick="openPrintModal('${rc.id}')" title="Cetak Ringkasan" class="p-1.5 text-slate-500 hover:text-emerald-700 rounded-lg">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                </button>
+                <button onclick="editRecipe('${rc.id}')" title="Edit Resep" class="p-1.5 text-slate-500 hover:text-emerald-600 rounded-lg">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                </button>
+                <button onclick="confirmDeleteRecipe('${rc.id}')" title="Hapus Resep" class="p-1.5 text-slate-500 hover:text-rose-600 rounded-lg">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div class="md:col-span-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Bahan & Kemasan:</span>
+                <div class="space-y-0.5">
+                  ${itemsList}
+                  ${rc.additionalCost > 0 ? `
+                    <div class="flex items-center justify-between text-xs py-1 border-t border-slate-200 text-slate-600 font-mono">
+                      <span>Overhead / Kemasan</span>
+                      <strong>${formatRp(rc.additionalCost)}</strong>
+                    </div>
+                  ` : ''}
                 </div>
               </div>
 
-              <!-- Composition Preview & Financial Highlights -->
-              <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="md:col-span-2 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                  <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Komponen Bahan & Kemasan:</div>
-                  <div class="space-y-1">
-                    ${itemsList}
-                    ${rc.additionalCost > 0 ? `
-                      <div class="flex items-center justify-between text-xs py-1 border-t border-slate-200 text-slate-600">
-                        <span>Biaya Tambahan / Overhead Ops</span>
-                        <span class="font-mono font-bold text-slate-900">${formatRp(rc.additionalCost)}</span>
-                      </div>
-                    ` : ''}
-                  </div>
+              <div class="bg-gradient-to-br from-emerald-50/60 to-white p-3 rounded-xl border border-emerald-100 flex flex-col justify-between space-y-1.5">
+                <div>
+                  <span class="text-[10px] text-slate-500 block">Total HPP / Porsi</span>
+                  <span class="text-sm font-extrabold text-slate-900 font-mono">${formatRp(totalHpp)}</span>
                 </div>
-
-                <div class="bg-gradient-to-br from-emerald-50/60 to-white p-3.5 rounded-xl border border-emerald-100 flex flex-col justify-between space-y-2">
-                  <div>
-                    <span class="text-[11px] text-slate-500 block">Total HPP per Porsi:</span>
-                    <span class="text-base font-extrabold text-slate-900 font-mono">${formatRp(totalHpp)}</span>
-                  </div>
-                  <div>
-                    <span class="text-[11px] text-slate-500 block">Harga Jual Menu:</span>
-                    <span class="text-lg font-black text-emerald-700 font-mono">${formatRp(sellingPrice)}</span>
-                  </div>
-                  <div class="pt-2 border-t border-emerald-200/60 flex items-center justify-between text-xs">
-                    <span class="text-emerald-900 font-medium">Profit Bersih:</span>
-                    <span class="font-bold font-mono ${grossProfitRp >= 0 ? 'text-emerald-700' : 'text-rose-600'}">${formatRp(grossProfitRp)}</span>
-                  </div>
+                <div>
+                  <span class="text-[10px] text-slate-500 block">Harga Jual</span>
+                  <span class="text-base font-black text-emerald-700 font-mono">${formatRp(sellingPrice)}</span>
+                </div>
+                <div class="pt-1.5 border-t border-emerald-200/60 flex items-center justify-between text-xs">
+                  <span class="text-slate-600 text-[11px]">Profit:</span>
+                  <span class="font-bold font-mono ${grossProfitRp >= 0 ? 'text-emerald-700' : 'text-rose-600'}">${formatRp(grossProfitRp)}</span>
                 </div>
               </div>
             </div>
@@ -1774,7 +1467,7 @@ function updateHumanReadableSheets(ss, state) {
 
     function openRecipeModal(id = null) {
       if (state.rawMaterials.length === 0 && state.premixes.length === 0) {
-        showToast('Tambahkan bahan baku di Tab 1 atau racikan di Tab 2 terlebih dahulu', 'error');
+        showToast('Tambahkan bahan baku di Halaman 1 atau sub-resep di Halaman 2 dulu', 'error');
         return;
       }
 
@@ -1792,18 +1485,15 @@ function updateHumanReadableSheets(ss, state) {
         document.getElementById('recipeAdditionalCost').value = rc.additionalCost || 0;
         document.getElementById('recipeMarginTarget').value = rc.targetMarginPercent || 60;
         document.getElementById('recipeActualSellingPrice').value = rc.actualSellingPrice || 0;
-
         rc.items.forEach(it => addRecipeItemRow(it.type, it.id, it.amount));
       } else {
         document.getElementById('recipeModalTitle').textContent = 'Racik Menu Jadi Baru';
         document.getElementById('recipeId').value = '';
         document.getElementById('recipeName').value = '';
         document.getElementById('recipeCategory').value = 'Minuman';
-        document.getElementById('recipeAdditionalCost').value = '300';
+        document.getElementById('recipeAdditionalCost').value = '350';
         document.getElementById('recipeMarginTarget').value = '60';
         document.getElementById('recipeActualSellingPrice').value = '';
-
-        // Add 2 default empty item rows
         addRecipeItemRow();
         addRecipeItemRow();
       }
@@ -1821,7 +1511,6 @@ function updateHumanReadableSheets(ss, state) {
       const tr = document.createElement('tr');
       tr.className = 'border-b border-slate-100 last:border-0 hover:bg-slate-50 transition';
 
-      // Generate options with optgroups for Raw Materials and Premixes
       let rawOptions = state.rawMaterials.map(rm => {
         const isSel = selectedType === 'raw' && rm.id === selectedId;
         return `<option value="raw:${rm.id}" ${isSel ? 'selected' : ''}>[Mentah] ${escapeHtml(rm.name)} (${formatRp(rm.costPerUnit)}/${rm.unit})</option>`;
@@ -1833,28 +1522,24 @@ function updateHumanReadableSheets(ss, state) {
       }).join('');
 
       tr.innerHTML = `
-        <td class="p-2">
-          <select class="recipe-item-select w-full text-xs p-1.5 border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-emerald-500 focus:outline-none" onchange="calculateRecipeFinancials()">
+        <td class="p-1.5">
+          <select class="recipe-item-select w-full text-xs p-1.5 border border-slate-200 rounded-lg bg-white focus:outline-none" onchange="calculateRecipeFinancials()">
             <option value="">-- Pilih Bahan / Sub-Resep --</option>
-            <optgroup label="Bahan Mentah (Tab 1)">
-              ${rawOptions}
-            </optgroup>
-            <optgroup label="Sub-Resep / Premix (Tab 2)">
-              ${premixOptions}
-            </optgroup>
+            <optgroup label="Bahan Mentah (Halaman 1)">${rawOptions}</optgroup>
+            <optgroup label="Sub-Resep / Premix (Halaman 2)">${premixOptions}</optgroup>
           </select>
         </td>
-        <td class="p-2">
+        <td class="p-1.5">
           <div class="flex items-center space-x-1">
-            <input type="number" min="0.01" step="any" value="${amount}" placeholder="Takaran" class="recipe-item-amount w-full text-xs p-1.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-emerald-500 focus:outline-none font-mono" oninput="calculateRecipeFinancials()">
-            <span class="recipe-item-unit text-[11px] text-slate-400 w-8 text-left font-mono"></span>
+            <input type="number" min="0.01" step="any" value="${amount}" placeholder="Takaran" class="recipe-item-amount w-full text-xs p-1.5 border border-slate-200 rounded-lg font-mono" oninput="calculateRecipeFinancials()">
+            <span class="recipe-item-unit text-[10px] text-slate-400 w-6 font-mono"></span>
           </div>
         </td>
-        <td class="p-2 text-right font-mono font-semibold text-slate-700 recipe-item-subcost">
+        <td class="p-1.5 text-right font-mono font-semibold text-slate-700 recipe-item-subcost text-xs">
           Rp 0
         </td>
-        <td class="p-2 text-center">
-          <button type="button" onclick="this.closest('tr').remove(); calculateRecipeFinancials();" class="p-1 text-slate-400 hover:text-rose-600 rounded">
+        <td class="p-1.5 text-center">
+          <button type="button" onclick="this.closest('tr').remove(); calculateRecipeFinancials();" class="p-1 text-slate-400 hover:text-rose-600">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
         </td>
@@ -1879,21 +1564,14 @@ function updateHumanReadableSheets(ss, state) {
 
         if (val && amount > 0) {
           const [type, id] = val.split(':');
-          let costPerUnit = 0;
-          let unit = '';
+          let costPerUnit = 0, unit = '';
 
           if (type === 'raw') {
             const raw = state.rawMaterials.find(x => x.id === id);
-            if (raw) {
-              costPerUnit = raw.costPerUnit;
-              unit = raw.unit;
-            }
+            if (raw) { costPerUnit = raw.costPerUnit; unit = raw.unit; }
           } else if (type === 'premix') {
             const pm = state.premixes.find(x => x.id === id);
-            if (pm) {
-              costPerUnit = pm.costPerUnit;
-              unit = pm.yieldUnit;
-            }
+            if (pm) { costPerUnit = pm.costPerUnit; unit = pm.yieldUnit; }
           }
 
           unitBadge.textContent = unit;
@@ -1910,26 +1588,22 @@ function updateHumanReadableSheets(ss, state) {
       const totalHpp = totalItemsCost + additionalCost;
       document.getElementById('recipeHppTotalDisplay').textContent = formatRp(totalHpp);
 
-      // Compute suggested selling price from target margin
       const marginTargetPct = parseFloat(document.getElementById('recipeMarginTarget').value) || 60;
       if (marginTargetPct > 0 && marginTargetPct < 100) {
         const suggested = totalHpp / (1 - (marginTargetPct / 100));
-        // Round to nearest 500 for clean pricing
         const roundedSuggested = Math.ceil(suggested / 500) * 500;
         document.getElementById('recipeSuggestedPriceDisplay').textContent = `${formatRp(roundedSuggested)} (${marginTargetPct}%)`;
       } else {
         document.getElementById('recipeSuggestedPriceDisplay').textContent = '-';
       }
 
-      // Compute actual margin from actual input price
       calculateFromActualPrice(false);
     }
 
     function calculateFromMarginTarget() {
       calculateRecipeFinancials();
       const marginTargetPct = parseFloat(document.getElementById('recipeMarginTarget').value) || 0;
-      const totalHppStr = document.getElementById('recipeHppTotalDisplay').textContent;
-      const cleanHpp = parseFormattedCurrency(totalHppStr);
+      const cleanHpp = parseFormattedCurrency(document.getElementById('recipeHppTotalDisplay').textContent);
 
       if (marginTargetPct > 0 && marginTargetPct < 100 && cleanHpp > 0) {
         const suggested = cleanHpp / (1 - (marginTargetPct / 100));
@@ -1940,10 +1614,8 @@ function updateHumanReadableSheets(ss, state) {
     }
 
     function calculateFromActualPrice(updateTarget = false) {
-      const totalHppStr = document.getElementById('recipeHppTotalDisplay').textContent;
-      const totalHpp = parseFormattedCurrency(totalHppStr);
+      const totalHpp = parseFormattedCurrency(document.getElementById('recipeHppTotalDisplay').textContent);
       const actualSelling = parseFloat(document.getElementById('recipeActualSellingPrice').value) || 0;
-
       const grossProfit = actualSelling - totalHpp;
       const marginPct = actualSelling > 0 ? ((grossProfit / actualSelling) * 100) : 0;
 
@@ -1957,8 +1629,7 @@ function updateHumanReadableSheets(ss, state) {
 
     function parseFormattedCurrency(str) {
       if (!str) return 0;
-      const clean = str.replace(/[^\d]/g, '');
-      return parseFloat(clean) || 0;
+      return parseFloat(str.replace(/[^\d]/g, '')) || 0;
     }
 
     function saveRecipe(e) {
@@ -1970,10 +1641,7 @@ function updateHumanReadableSheets(ss, state) {
       const targetMarginPercent = parseFloat(document.getElementById('recipeMarginTarget').value) || 60;
       const actualSellingPrice = parseFloat(document.getElementById('recipeActualSellingPrice').value) || 0;
 
-      if (!name) {
-        showToast('Nama resep menu tidak boleh kosong', 'error');
-        return;
-      }
+      if (!name) return showToast('Nama menu tidak boleh kosong', 'error');
 
       const rows = document.querySelectorAll('#recipeRowsBody tr');
       const items = [];
@@ -1987,25 +1655,17 @@ function updateHumanReadableSheets(ss, state) {
         }
       });
 
-      if (items.length === 0) {
-        showToast('Minimal masukkan 1 bahan atau premix dalam resep', 'error');
-        return;
-      }
+      if (items.length === 0) return showToast('Minimal masukkan 1 bahan', 'error');
 
       if (id) {
         const idx = state.recipes.findIndex(x => x.id === id);
         if (idx !== -1) {
-          state.recipes[idx] = {
-            id, name, category, items, additionalCost, targetMarginPercent, actualSellingPrice
-          };
-          showToast(`Resep menu "${name}" berhasil diperbarui`);
+          state.recipes[idx] = { id, name, category, items, additionalCost, targetMarginPercent, actualSellingPrice };
+          showToast(`Menu "${name}" diperbarui`);
         }
       } else {
-        const newId = 'rc_' + Date.now();
-        state.recipes.push({
-          id: newId, name, category, items, additionalCost, targetMarginPercent, actualSellingPrice
-        });
-        showToast(`Resep menu "${name}" berhasil ditambahkan`);
+        state.recipes.push({ id: 'rc_' + Date.now(), name, category, items, additionalCost, targetMarginPercent, actualSellingPrice });
+        showToast(`Menu "${name}" ditambahkan`);
       }
 
       saveState();
@@ -2021,23 +1681,17 @@ function updateHumanReadableSheets(ss, state) {
       const rc = state.recipes.find(x => x.id === id);
       if (!rc) return;
 
-      openConfirm('Hapus Resep Menu', `Hapus menu "${rc.name}" dari daftar?`, () => {
+      openConfirm('Hapus Resep Menu', `Hapus menu "${rc.name}"?`, () => {
         state.recipes = state.recipes.filter(x => x.id !== id);
         saveState();
         renderRecipes();
-        showToast(`Resep menu "${rc.name}" telah dihapus`);
+        showToast(`Menu "${rc.name}" dihapus`);
       });
     }
 
-    /* ========================================================= */
-    /* GLOBAL RE-CALCULATION & DEPENDENCY CASCADE                */
-    /* ========================================================= */
-
     function recalculateAllPremixesAndRecipes() {
-      // 1. Recalculate each premix cost based on latest rawMaterials
       state.premixes.forEach(pm => {
-        let totalCost = 0;
-        let totalYield = 0;
+        let totalCost = 0, totalYield = 0;
         pm.items.forEach(item => {
           const raw = state.rawMaterials.find(r => r.id === item.rawId);
           if (raw) {
@@ -2049,61 +1703,44 @@ function updateHumanReadableSheets(ss, state) {
         pm.totalYield = totalYield;
         pm.costPerUnit = totalYield > 0 ? (totalCost / totalYield) : 0;
       });
-
-      // 2. Note: Recipes will reflect recalculated costs during render
     }
 
-    /* ========================================================= */
-    /* PRINT / EXPORT DETAIL MODAL LOGIC                         */
-    /* ========================================================= */
-
     let currentPrintRecipeText = '';
-
     function openPrintModal(recipeId) {
       const rc = state.recipes.find(x => x.id === recipeId);
       if (!rc) return;
 
       const container = document.getElementById('printContainer');
       let ingredientsHpp = 0;
-      let textLines = [];
-
-      textLines.push(`RINGKASAN HPP RESEP: ${rc.name.toUpperCase()}`);
-      textLines.push(`Kategori: ${rc.category || '-'}`);
-      textLines.push(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`);
-      textLines.push('----------------------------------------');
-      textLines.push('KOMPONEN RESEP:');
+      let textLines = [
+        `RINGKASAN HPP: ${rc.name.toUpperCase()}`,
+        `Kategori: ${rc.category || '-'}`,
+        `Tanggal: ${new Date().toLocaleDateString('id-ID')}`,
+        '----------------------------------------'
+      ];
 
       const itemsHtml = rc.items.map(it => {
-        let name = '';
-        let unit = '';
-        let costPerUnit = 0;
-        let typeBadge = '';
-
+        let name = '', unit = '', costPerUnit = 0;
         if (it.type === 'raw') {
           const raw = state.rawMaterials.find(r => r.id === it.id);
-          name = raw ? raw.name : '(Bahan Mentah)';
+          name = raw ? raw.name : '(Mentah)';
           unit = raw ? raw.unit : '';
           costPerUnit = raw ? raw.costPerUnit : 0;
-          typeBadge = 'Bahan Mentah';
         } else {
           const pm = state.premixes.find(p => p.id === it.id);
           name = pm ? pm.name : '(Sub-Resep)';
           unit = pm ? pm.yieldUnit : '';
           costPerUnit = pm ? pm.costPerUnit : 0;
-          typeBadge = 'Sub-Resep';
         }
-
         const cost = costPerUnit * it.amount;
         ingredientsHpp += cost;
-
-        textLines.push(`- [${typeBadge}] ${name}: ${formatNumber(it.amount)} ${unit} = ${formatRp(cost)}`);
+        textLines.push(`- ${name}: ${formatNumber(it.amount)} ${unit} = ${formatRp(cost)}`);
 
         return `
           <tr class="border-b border-slate-200">
-            <td class="py-1.5 px-2 font-medium text-slate-800">${escapeHtml(name)} <span class="text-[10px] text-slate-500 font-normal">(${typeBadge})</span></td>
-            <td class="py-1.5 px-2 text-right font-mono text-xs">${formatNumber(it.amount)} ${unit}</td>
-            <td class="py-1.5 px-2 text-right font-mono text-xs text-slate-600">${formatRp(costPerUnit)}/${unit}</td>
-            <td class="py-1.5 px-2 text-right font-mono text-xs font-bold text-slate-900">${formatRp(cost)}</td>
+            <td class="py-1 px-1.5 font-medium text-slate-800 text-xs">${escapeHtml(name)}</td>
+            <td class="py-1 px-1.5 text-right font-mono text-xs">${formatNumber(it.amount)} ${unit}</td>
+            <td class="py-1 px-1.5 text-right font-mono text-xs font-bold text-slate-900">${formatRp(cost)}</td>
           </tr>
         `;
       }).join('');
@@ -2113,56 +1750,42 @@ function updateHumanReadableSheets(ss, state) {
       const profitRp = sellingPrice - totalHpp;
       const profitMarginPct = sellingPrice > 0 ? ((profitRp / sellingPrice) * 100) : 0;
 
-      textLines.push('----------------------------------------');
-      if (rc.additionalCost > 0) {
-        textLines.push(`Biaya Tambahan / Packaging: ${formatRp(rc.additionalCost)}`);
-      }
-      textLines.push(`TOTAL HPP PER PORSI : ${formatRp(totalHpp)}`);
-      textLines.push(`HARGA JUAL TARGET  : ${formatRp(sellingPrice)}`);
-      textLines.push(`PROFIT KOTOR (RP)  : ${formatRp(profitRp)}`);
-      textLines.push(`MARGIN KOTOR (%)   : ${formatNumber(profitMarginPct, 1)}%`);
-
+      textLines.push(`Overhead/Packaging: ${formatRp(rc.additionalCost || 0)}`);
+      textLines.push(`TOTAL HPP  : ${formatRp(totalHpp)}`);
+      textLines.push(`HARGA JUAL : ${formatRp(sellingPrice)}`);
+      textLines.push(`PROFIT     : ${formatRp(profitRp)} (${formatNumber(profitMarginPct, 1)}%)`);
       currentPrintRecipeText = textLines.join('\n');
 
       container.innerHTML = `
-        <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
-          <div class="text-center pb-3 border-b border-slate-200">
-            <h4 class="text-lg font-bold text-slate-900">${escapeHtml(rc.name)}</h4>
-            <p class="text-xs text-slate-500">Lembar Kalkulasi HPP & Margin Produk</p>
+        <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50">
+          <div class="text-center pb-2 border-b border-slate-200">
+            <h4 class="text-base font-bold text-slate-900">${escapeHtml(rc.name)}</h4>
+            <span class="text-xs text-slate-500">${escapeHtml(rc.category || 'Minuman')}</span>
           </div>
 
-          <table class="w-full text-left text-xs my-3 border-collapse">
+          <table class="w-full text-left my-2 border-collapse">
             <thead>
-              <tr class="border-b border-slate-300 text-slate-500 font-semibold">
-                <th class="py-1.5 px-2">Komponen</th>
-                <th class="py-1.5 px-2 text-right">Takaran</th>
-                <th class="py-1.5 px-2 text-right">Harga Modal</th>
-                <th class="py-1.5 px-2 text-right">Subtotal</th>
+              <tr class="border-b border-slate-300 text-slate-500 text-[11px] font-bold">
+                <th class="py-1 px-1.5">Bahan</th>
+                <th class="py-1 px-1.5 text-right">Takaran</th>
+                <th class="py-1 px-1.5 text-right">Biaya</th>
               </tr>
             </thead>
-            <tbody>
-              ${itemsHtml}
-              ${rc.additionalCost > 0 ? `
-                <tr class="border-b border-slate-200 bg-white">
-                  <td colspan="3" class="py-1.5 px-2 text-slate-600 font-medium">Overhead / Packaging Tambahan</td>
-                  <td class="py-1.5 px-2 text-right font-mono font-bold text-slate-900">${formatRp(rc.additionalCost)}</td>
-                </tr>
-              ` : ''}
-            </tbody>
+            <tbody>${itemsHtml}</tbody>
           </table>
 
-          <div class="space-y-1.5 pt-2 border-t border-slate-300 text-xs">
+          <div class="space-y-1 pt-2 border-t border-slate-300 text-xs font-mono">
             <div class="flex justify-between font-bold text-slate-800">
-              <span>Total HPP Bersih:</span>
-              <span class="font-mono text-emerald-800">${formatRp(totalHpp)}</span>
+              <span>Total HPP:</span>
+              <span class="text-emerald-800">${formatRp(totalHpp)}</span>
             </div>
             <div class="flex justify-between font-bold text-slate-900 text-sm">
-              <span>Harga Jual Menu:</span>
-              <span class="font-mono text-slate-900">${formatRp(sellingPrice)}</span>
+              <span>Harga Jual:</span>
+              <span>${formatRp(sellingPrice)}</span>
             </div>
-            <div class="flex justify-between text-xs text-slate-600 pt-1 border-t border-slate-200">
-              <span>Profit Kotor per Porsi:</span>
-              <span class="font-mono font-bold text-emerald-700">${formatRp(profitRp)} (${formatNumber(profitMarginPct, 1)}%)</span>
+            <div class="flex justify-between text-emerald-700 font-bold pt-1 border-t border-slate-200">
+              <span>Profit:</span>
+              <span>${formatRp(profitRp)} (${formatNumber(profitMarginPct, 1)}%)</span>
             </div>
           </div>
         </div>
@@ -2177,22 +1800,18 @@ function updateHumanReadableSheets(ss, state) {
 
     function copyPrintAsText() {
       if (!currentPrintRecipeText) return;
-      const tempArea = document.createElement('textarea');
-      tempArea.value = currentPrintRecipeText;
-      document.body.appendChild(tempArea);
-      tempArea.select();
+      const ta = document.createElement('textarea');
+      ta.value = currentPrintRecipeText;
+      document.body.appendChild(ta);
+      ta.select();
       document.execCommand('copy');
-      document.body.removeChild(tempArea);
-      showToast('Ringkasan resep disalin ke clipboard');
+      document.body.removeChild(ta);
+      showToast('Ringkasan resep disalin!');
     }
 
     function triggerBrowserPrint() {
       window.print();
     }
-
-    /* ========================================================= */
-    /* BACKUP, RESTORE & RESET FUNCTIONS                         */
-    /* ========================================================= */
 
     function exportDataJSON() {
       const dataStr = JSON.stringify(state, null, 2);
@@ -2200,12 +1819,12 @@ function updateHumanReadableSheets(ss, state) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `HPP_Calculator_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `HPP_Pro_${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showToast('Cadangan data JSON berhasil diunduh');
+      showToast('Cadangan data JSON diunduh');
     }
 
     function importDataJSON(event) {
@@ -2227,12 +1846,10 @@ function updateHumanReadableSheets(ss, state) {
             renderRawMaterials();
             renderPremixes();
             renderRecipes();
-            showToast('Data berhasil dipulihkan dari file JSON!');
-          } else {
-            showToast('Format file JSON tidak cocok', 'error');
+            showToast('Data berhasil dipulihkan!');
           }
         } catch (err) {
-          showToast('Gagal membaca file JSON', 'error');
+          showToast('File JSON tidak valid', 'error');
         }
         event.target.value = '';
       };
@@ -2240,40 +1857,120 @@ function updateHumanReadableSheets(ss, state) {
     }
 
     function confirmResetData() {
-      openConfirm(
-        'Reset ke Data Sampel?',
-        'Tindakan ini akan mengembalikan contoh menu dan bahan baku standar kedai kopi. Pastikan backup data Anda jika diperlukan.',
-        () => {
-          state = JSON.parse(JSON.stringify(DEFAULT_DATA));
-          saveState();
-          renderRawMaterials();
-          renderPremixes();
-          renderRecipes();
-          showToast('Data berhasil di-reset ke sampel default');
-        }
-      );
+      openConfirm('Reset Data Default?', 'Semua data akan dikembalikan ke data sampel kedai kopi.', () => {
+        state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        saveState();
+        renderRawMaterials();
+        renderPremixes();
+        renderRecipes();
+        showToast('Data berhasil di-reset');
+      });
     }
 
-    /* Utility helper to prevent XSS in dynamic renders */
+    function openConfirm(title, message, onConfirm) {
+      const modal = document.getElementById('confirmModal');
+      document.getElementById('confirmModalTitle').textContent = title;
+      document.getElementById('confirmModalMessage').textContent = message;
+
+      const cancelBtn = document.getElementById('confirmCancelBtn');
+      const okBtn = document.getElementById('confirmOkBtn');
+
+      const cleanup = () => {
+        modal.classList.add('hidden');
+        cancelBtn.onclick = null;
+        okBtn.onclick = null;
+      };
+
+      cancelBtn.onclick = cleanup;
+      okBtn.onclick = () => { cleanup(); onConfirm(); };
+      modal.classList.remove('hidden');
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `p-3 rounded-xl shadow-xl border text-xs font-bold flex items-center space-x-2 pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0 ${
+        type === 'success' ? 'bg-emerald-900 text-white border-emerald-700' : 'bg-rose-900 text-white border-rose-700'
+      }`;
+      toast.innerHTML = `<span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 20);
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function openCloudModal() {
+      loadCloudConfig();
+      document.getElementById('cloudModal').classList.remove('hidden');
+    }
+
+    function closeCloudModal() {
+      document.getElementById('cloudModal').classList.add('hidden');
+    }
+
+    function saveCloudUrlAndTest() {
+      const url = (document.getElementById('cloudAppUrlInput').value || '').trim();
+      cloudConfig.appUrl = url;
+      saveCloudConfig();
+      showToast('URL Google Apps Script disimpan!');
+      pullFromGoogleSheet(true);
+      closeCloudModal();
+    }
+
+    function toggleAutoSyncSetting(val) {
+      cloudConfig.autoSync = val;
+      saveCloudConfig();
+      showToast(val ? 'Auto-sync aktif' : 'Auto-sync non-aktif');
+    }
+
+    function formatRp(val) {
+      if (isNaN(val) || val === null || val === undefined) return 'Rp 0';
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 1 }).format(val).replace(/\s/g, ' ');
+    }
+
+    function formatNumber(val, decimals = 1) {
+      if (isNaN(val)) return '0';
+      return Number(val).toLocaleString('id-ID', { maximumFractionDigits: decimals });
+    }
+
     function escapeHtml(str) {
       if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        updateAllBadges();
+        triggerAutoCloudSync();
+      } catch (err) {
+        showToast('Gagal menyimpan memori lokal', 'error');
+      }
+    }
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          state = JSON.parse(saved);
+        } else {
+          state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+          saveState();
+        }
+      } catch (e) {
+        state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      }
     }
 
     window.addEventListener('DOMContentLoaded', () => {
       loadState();
       loadCloudConfig();
-      renderRawMaterials();
-      renderPremixes();
-      renderRecipes();
-      updateHeaderBadges();
+      switchTab(1);
+      updateAllBadges();
 
-      // Auto pull if cloud is already configured
       if (cloudConfig.appUrl) {
         pullFromGoogleSheet(false);
       }
